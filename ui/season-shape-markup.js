@@ -55,9 +55,9 @@ const monthDay = (month, day) => `${MONTHS[month - 1]} ${day}`;
  * take on trust. With them it is a claim they can check against the track on
  * the globe and against the `Fastest strengthening` row directly above it.
  *
- * ==> AND IT SAYS NOTHING AT ALL WHEN THERE WAS NO COMEBACK. <== 14 storms in
+ * ==> AND IT SAYS NOTHING AT ALL WHEN THERE WAS NO COMEBACK. <== 15 storms in
  * 3,266 have one. A sentence saying "it did not weaken and recover" on the
- * other 3,252 would be a qualifier that fires everywhere and qualifies
+ * other 3,251 would be a qualifier that fires everywhere and qualifies
  * nothing, and it would push the real ones down the section.
  *
  * @param {object|null} cb  `facts.comeback` from `lib/storm-shape.js`

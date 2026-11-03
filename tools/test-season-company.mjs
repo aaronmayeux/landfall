@@ -49,10 +49,11 @@ const { stormFacts } = await import('../lib/season-facts.js');
 const { seasonCompany } = await import('../lib/season-company.js');
 const { seasonCompanyHtml } = await import('../ui/season-rank-markup.js');
 
-const FILES = [
-  'seasons/data/hurdat2-atlantic-2025-02272026.txt',
-  'seasons/data/hurdat2-epacific-2025-02272026.txt',
-];
+/* The whole-basin files come off the index, never typed. They were written out
+ * here, and the 2026-10-03 East Pacific revision renamed one and turned this
+ * suite red for a month. The index is what the runner and the phone read. */
+const FILES = Object.values(JSON.parse(readFileSync('seasons/index.json', 'utf8')).basins)
+  .map((b) => b.file.replace(/^\//, ''));
 
 const raw = [];
 for (const f of FILES) {

@@ -318,8 +318,8 @@ ok(`${stacked} storms need a second row and the deepest is ${deepest}`,
   stacked > 100 && deepest === SEASONS.lifeChartMaxDiscRows);
 ok(`the row histogram is the measured one: `
   + `${[...rowHist.keys()].sort().map((k) => `${k}:${rowHist.get(k)}`).join(' ')}`,
-  rowHist.get(1) === 1199 && rowHist.get(2) === 201
-  && rowHist.get(3) === 33 && rowHist.get(4) === 2);
+  rowHist.get(1) === 1198 && rowHist.get(2) === 201
+  && rowHist.get(3) === 34 && rowHist.get(4) === 2);
 
 /* ==> THE NUMBER IS THE PLACE IN THE LIST AND NEVER THE PLACE IN A ROW. <==
  * The match to the numbered list under the chart is the entire reason the

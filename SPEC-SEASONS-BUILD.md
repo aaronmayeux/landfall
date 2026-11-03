@@ -6558,13 +6558,22 @@ leaves the reader unable to use the number, and calling the figure unreliable
 would be wrong — it is an accurate rank in a smaller set.
 
 **THE FILENAME IS DERIVED ON BOTH SIDES AND CARRIES EVERY CONTRIBUTING BASIN'S
-REVISION.** `rankings-02272026.json` today. §57.40a's rule: two jobs must never
-write one file, so `index.json` is not edited to name it. One basin's revision
-cannot name a file spanning several, and the file is `immutable` for a year, so
-a stamp that failed to move when NOAA revised one basin would leave a stale
-ladder on every returning phone until 2027. Revised separately it becomes
-`rankings-02272026-05142026.json`. `_headers` needs no edit: `/seasons/data/*`
-already covers it and the stamp is the cache bust.
+REVISION.** `rankings-v2-02272026-092926.json` today: the Atlantic is
+`02272026` and the East Pacific `092926`, revised separately. §57.40a's rule:
+two jobs must never write one file, so `index.json` is not edited to name it.
+One basin's revision cannot name a file spanning several, and the file is
+`immutable` for a year, so a stamp that failed to move when NOAA revised one
+basin would leave a stale ladder on every returning phone until 2027.
+`_headers` needs no edit: `/seasons/data/*` already covers it and the stamp is
+the cache bust.
+
+**==> NOTHING REBUILDS THE TABLE WHEN A BASIN IS REVISED. RUN
+`node tools/seasons-rankings.mjs` IN THE SAME COMMIT, AND DELETE THE OLD
+FILE. <==** The mirror job updates `index.json`, the phone derives the new name
+at once, and until someone runs the script that name 404s. The 2026-10-03 East
+Pacific revision shipped without it, and every storm's archive rank was missing
+for a month: no error, because a missing table is meant to draw nothing (below).
+`test-rankings.mjs` fails on the missing file, which is what caught it.
 
 **LOSING THE TABLE COSTS THIS SECTION AND NOTHING ELSE.** It resolves to `null`
 on a failed fetch, on a 200 carrying the wrong shape, and on an index with no
@@ -7098,18 +7107,18 @@ Three stages in order: reach `hurricaneKt`, fall below `comebackFloorKt`, reach
 under 34 kt, so a test that only asks whether the storm was ever weak and ever
 strong is true of the entire archive.
 
-**==> THE FLOOR IS 34 KT AND NOT 64, AND THE DIFFERENCE IS 14 STORMS AGAINST
-181. <==** Both counted over all 3,266 mirrored storms. A hurricane that dips
-below hurricane force and recovers is ordinary — 181 of them, a qualifier that
+**==> THE FLOOR IS 34 KT AND NOT 64, AND THE DIFFERENCE IS 15 STORMS AGAINST
+182. <==** Both counted over all 3,266 mirrored storms. A hurricane that dips
+below hurricane force and recovers is ordinary — 182 of them, a qualifier that
 fires too often to be worth a sentence. A hurricane that falls all the way back
-to a depression and becomes a hurricane again is **14 storms in 175 years**, and
+to a depression and becomes a hurricane again is **15 storms in 175 years**, and
 they are the ones people remember: Jeanne 2004, Ida 2009, Eta 2020, John 1994
 and John 2024.
 
 **==> THERE IS NO CYCLONE-STATUS FILTER, AND JOHN 2024 IS WHY. <==** The obvious
 tidy-up is to require a cyclone status at the low point, the rule `forwardSpeed`
-and ACE both correctly apply. Thirteen of the fourteen sit at `TD` when they
-bottom out; **the fourteenth, John (EP102024), is `DB`** — a disturbance. That
+and ACE both correctly apply. Fourteen of the fifteen sit at `TD` when they
+bottom out; **the fifteenth, John (EP102024), is `DB`** — a disturbance. That
 is the storm that came ashore in Mexico, fell to pieces over land and rebuilt
 into a hurricane offshore, which is the single best example of the fact the
 sentence exists to state. **The filter deletes exactly that storm and nothing
@@ -7265,7 +7274,7 @@ its cap is the baseline for the next statistic to land against.
 #### Fixtures
 
 One added: `samples/seasons/storms/al112004.txt`, **Jeanne 2004**, sliced from
-the mirrored whole-basin file. None of the fourteen comeback storms had a
+the mirrored whole-basin file. None of the fifteen comeback storms had a
 fixture and the comeback needed a real end-to-end case. Hugo 1989 (Cape Verde),
 Katrina 2005 (home-grown) and Andres 2021 (formed May 8, a week before the East
 Pacific opens) were all already in the sample set and cover the other two facts.
@@ -9366,9 +9375,9 @@ Measured through the shipped renderer at `SEASONS.lifeChartDiscPx`:
 
 | rows needed | storms |
 |---|---|
-| 1 | 1,199 |
+| 1 | 1,198 |
 | 2 | 201 |
-| 3 | 33 |
+| 3 | 34 |
 | 4 | 2 |
 
 **==> THOSE ARE NOT THE MEASUREMENT TOOL'S FIGURES AND THE DIFFERENCE IS REAL.

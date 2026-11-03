@@ -351,101 +351,101 @@ real home is the other row carrying the same section number.
 | `57.41` | &nbsp;&nbsp;The storm's life, in a paragraph — as built | `SPEC-SEASONS-BUILD.md` | 5759-5932 |
 | `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5933-6156 |
 | `57.43` | &nbsp;&nbsp;Speed, the coast, and the season — three Tier 1 facts, as built | `SPEC-SEASONS-BUILD.md` | 6157-6168 |
-| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 6350-6629 |
-| `57.45` | &nbsp;&nbsp;How far a storm went — as built | `SPEC-SEASONS-BUILD.md` | 6630-6645 |
-| `57.46` | &nbsp;&nbsp;Distance travelled, ranked against the archive — as built | `SPEC-SEASONS-BUILD.md` | 6809-6864 |
-| `57.47` | &nbsp;&nbsp;The rankings file needs a version of its own — as built | `SPEC-SEASONS-BUILD.md` | 6942-6995 |
-| `57.48` | &nbsp;&nbsp;The comeback, the calendar and the origin — as built | `SPEC-SEASONS-BUILD.md` | 7053-7065 |
-| `57.49` | &nbsp;&nbsp;The loop — as built | `SPEC-SEASONS-BUILD.md` | 7284-7305 |
-| `57.50` | &nbsp;&nbsp;How many other storms were running — as built | `SPEC-SEASONS-BUILD.md` | 7435-7480 |
-| `57.51` | &nbsp;&nbsp;The retired names, derived — as built | `SPEC-SEASONS-BUILD.md` | 7592-7624 |
-| `57.52` | &nbsp;&nbsp;The retired names on screen — as built | `SPEC-SEASONS-BUILD.md` | 7770-7781 |
-| `57.53` | &nbsp;&nbsp;One mark grammar across both screens — as built | `SPEC-SEASONS-BUILD.md` | 7995-8008 |
-| `57.54` | &nbsp;&nbsp;The storm panel, rebuilt — the plan | `SPEC-SEASONS-BUILD.md` | 8091-8113 |
-| `57.54a` | &nbsp;&nbsp;&nbsp;&nbsp;What was actually wrong — measured, not asserted | `SPEC-SEASONS-BUILD.md` | 8114-8166 |
-| `57.54b` | &nbsp;&nbsp;&nbsp;&nbsp;The decision — one row carries the figure, the rank AND the spread | `SPEC-SEASONS-BUILD.md` | 8167-8195 |
-| `57.54c` | &nbsp;&nbsp;&nbsp;&nbsp;The distribution bar — the spread costs zero new bytes | `SPEC-SEASONS-BUILD.md` | 8196-8247 |
-| `57.54d` | &nbsp;&nbsp;&nbsp;&nbsp;The life chart — the one hero | `SPEC-SEASONS-BUILD.md` | 8248-8282 |
-| `57.54e` | &nbsp;&nbsp;&nbsp;&nbsp;ACE, in plain English — the panel currently teaches nothing | `SPEC-SEASONS-BUILD.md` | 8283-8332 |
-| `57.54f` | &nbsp;&nbsp;&nbsp;&nbsp;The sections — nine become six, and the order is a narrative | `SPEC-SEASONS-BUILD.md` | 8333-8372 |
-| `57.54g` | &nbsp;&nbsp;&nbsp;&nbsp;What this is worth — measured on the prototype | `SPEC-SEASONS-BUILD.md` | 8373-8389 |
-| `57.54h` | &nbsp;&nbsp;&nbsp;&nbsp;Two live faults on `main`, found while reading the panel | `SPEC-SEASONS-BUILD.md` | 8390-8410 |
-| `57.54i` | &nbsp;&nbsp;&nbsp;&nbsp;Three things this archive holds and does not use | `SPEC-SEASONS-BUILD.md` | 8411-8446 |
-| `57.54j` | &nbsp;&nbsp;&nbsp;&nbsp;The globe tether — scoped, not planned in detail | `SPEC-SEASONS-BUILD.md` | 8447-8472 |
-| `57.54k` | &nbsp;&nbsp;&nbsp;&nbsp;The build order — reserved section numbers | `SPEC-SEASONS-BUILD.md` | 8473-8544 |
-| `57.55` | &nbsp;&nbsp;Step 1 — the two live faults on `main` — as built | `SPEC-SEASONS-BUILD.md` | 8545-8551 |
-| `57.55a` | &nbsp;&nbsp;&nbsp;&nbsp;The rapid-intensification sentence left the value column | `SPEC-SEASONS-BUILD.md` | 8552-8588 |
-| `57.55b` | &nbsp;&nbsp;&nbsp;&nbsp;The em dash left the markup file, and the sweep widened to reach it | `SPEC-SEASONS-BUILD.md` | 8589-8639 |
-| `57.56` | &nbsp;&nbsp;Step 2 — the distribution bar — as built | `SPEC-SEASONS-BUILD.md` | 8640-8651 |
-| `57.56a` | &nbsp;&nbsp;&nbsp;&nbsp;Three numbers decided the shape, and all three were measured | `SPEC-SEASONS-BUILD.md` | 8652-8676 |
-| `57.56b` | &nbsp;&nbsp;&nbsp;&nbsp;The unit trap, reproduced and then closed | `SPEC-SEASONS-BUILD.md` | 8677-8700 |
-| `57.56c` | &nbsp;&nbsp;&nbsp;&nbsp;What the bar is made of | `SPEC-SEASONS-BUILD.md` | 8701-8730 |
-| `57.56d` | &nbsp;&nbsp;&nbsp;&nbsp;The axis speaks the row's units, and that is the whole contract | `SPEC-SEASONS-BUILD.md` | 8731-8750 |
-| `57.56e` | &nbsp;&nbsp;&nbsp;&nbsp;Two files created now rather than at step 3 | `SPEC-SEASONS-BUILD.md` | 8751-8780 |
-| `57.56f` | &nbsp;&nbsp;&nbsp;&nbsp;Two tokens, and why the mark is not the focus ring | `SPEC-SEASONS-BUILD.md` | 8781-8800 |
-| `57.56g` | &nbsp;&nbsp;&nbsp;&nbsp;Three mutation runs, and one of them found a hole in the suite | `SPEC-SEASONS-BUILD.md` | 8801-8822 |
-| `57.56h` | &nbsp;&nbsp;&nbsp;&nbsp;What is expected to come back wrong, flagged before glass | `SPEC-SEASONS-BUILD.md` | 8823-8836 |
-| `57.57` | &nbsp;&nbsp;Step 3 — the merged row — as built | `SPEC-SEASONS-BUILD.md` | 8837-8875 |
-| `57.57a` | &nbsp;&nbsp;&nbsp;&nbsp;The cut came first, and it was the whole first commit | `SPEC-SEASONS-BUILD.md` | 8876-8912 |
-| `57.57b` | &nbsp;&nbsp;&nbsp;&nbsp;The merged row — one figure, one place | `SPEC-SEASONS-BUILD.md` | 8913-9013 |
-| `57.57c` | &nbsp;&nbsp;&nbsp;&nbsp;The scope sentence becomes one footnote, and it has to name itself | `SPEC-SEASONS-BUILD.md` | 9014-9055 |
-| `57.58` | &nbsp;&nbsp;Step 4 — ACE in plain English — as built | `SPEC-SEASONS-BUILD.md` | 9056-9080 |
-| `57.58a` | &nbsp;&nbsp;&nbsp;&nbsp;It was Tier 2, not the Tier 1 §57.54k promised | `SPEC-SEASONS-BUILD.md` | 9081-9093 |
-| `57.58b` | &nbsp;&nbsp;&nbsp;&nbsp;The count moved into the value rather than being deleted | `SPEC-SEASONS-BUILD.md` | 9094-9109 |
-| `57.58c` | &nbsp;&nbsp;&nbsp;&nbsp;Every number in the sentence is computed, and one of them is a constant | `SPEC-SEASONS-BUILD.md` | 9110-9125 |
-| `57.58d` | &nbsp;&nbsp;&nbsp;&nbsp;What a storm with no ACE gets, and where the obvious guess was wrong | `SPEC-SEASONS-BUILD.md` | 9126-9138 |
-| `57.58e` | &nbsp;&nbsp;&nbsp;&nbsp;The cost, measured, and the lever if it is too much | `SPEC-SEASONS-BUILD.md` | 9139-9162 |
-| `57.58f` | &nbsp;&nbsp;&nbsp;&nbsp;One statistic, one name | `SPEC-SEASONS-BUILD.md` | 9163-9170 |
-| `57.59` | &nbsp;&nbsp;Step 5 — the life chart — as built | `SPEC-SEASONS-BUILD.md` | 9171-9207 |
-| `57.59a` | &nbsp;&nbsp;&nbsp;&nbsp;Two measurements came before any shipping code, as §57.54d required | `SPEC-SEASONS-BUILD.md` | 9208-9254 |
-| `57.59b` | &nbsp;&nbsp;&nbsp;&nbsp;The geometry is the mockup's, to the decimal | `SPEC-SEASONS-BUILD.md` | 9255-9298 |
-| `57.59c` | &nbsp;&nbsp;&nbsp;&nbsp;The colours are the app's, and the mockup's were not | `SPEC-SEASONS-BUILD.md` | 9299-9342 |
-| `57.59d` | &nbsp;&nbsp;&nbsp;&nbsp;Two palette tokens reached CSS for the first time | `SPEC-SEASONS-BUILD.md` | 9343-9362 |
-| `57.59e` | &nbsp;&nbsp;&nbsp;&nbsp;The discs stack, and the number is the place in the LIST | `SPEC-SEASONS-BUILD.md` | 9363-9391 |
-| `57.59f` | &nbsp;&nbsp;&nbsp;&nbsp;Nine mutations, and two of them found real holes | `SPEC-SEASONS-BUILD.md` | 9392-9434 |
-| `57.59h` | &nbsp;&nbsp;&nbsp;&nbsp;The first day label was clipped on half the archive | `SPEC-SEASONS-BUILD.md` | 9435-9480 |
-| `57.59i` | &nbsp;&nbsp;&nbsp;&nbsp;The year stamp was drawn through by a disc on the fourth row | `SPEC-SEASONS-BUILD.md` | 9481-9527 |
-| `57.59g` | &nbsp;&nbsp;&nbsp;&nbsp;What to judge on glass, and the first is step 5's own risk | `SPEC-SEASONS-BUILD.md` | 9528-9552 |
-| `57.60` | &nbsp;&nbsp;Step 6 — the numbered landfalls — as built | `SPEC-SEASONS-BUILD.md` | 9553-9567 |
-| `57.60a` | &nbsp;&nbsp;&nbsp;&nbsp;Four numbers came before the code, and all four said the same thing | `SPEC-SEASONS-BUILD.md` | 9568-9591 |
-| `57.60b` | &nbsp;&nbsp;&nbsp;&nbsp;One function owns the numbers, and it carries two of them | `SPEC-SEASONS-BUILD.md` | 9592-9611 |
-| `57.60c` | &nbsp;&nbsp;&nbsp;&nbsp;The layout is the mockup's, and the badge is NOT the chart's disc | `SPEC-SEASONS-BUILD.md` | 9612-9668 |
-| `57.60d` | &nbsp;&nbsp;&nbsp;&nbsp;It was measured in a browser, because a badge is the `18 of 3` shape | `SPEC-SEASONS-BUILD.md` | 9669-9687 |
-| `57.60e` | &nbsp;&nbsp;&nbsp;&nbsp;Nine mutations, eight bite, and the ninth is honest rather than a hole | `SPEC-SEASONS-BUILD.md` | 9688-9702 |
-| `57.60f` | &nbsp;&nbsp;&nbsp;&nbsp;Confirmed on glass, and what was judged | `SPEC-SEASONS-BUILD.md` | 9703-9737 |
-| `57.60g` | &nbsp;&nbsp;&nbsp;&nbsp;Two faults the mockup pass found, and one of them had shipped | `SPEC-SEASONS-BUILD.md` | 9738-9775 |
-| `57.63` | &nbsp;&nbsp;The distribution bar's mark failed contrast on the archive panel | `SPEC-SEASONS-BUILD.md` | 9776-9830 |
-| `57.64` | &nbsp;&nbsp;The distribution bar, restyled to the mockup | `SPEC-SEASONS-BUILD.md` | 9831-9840 |
-| `57.64a` | &nbsp;&nbsp;&nbsp;&nbsp;The baseline and its end ticks were the substance of it | `SPEC-SEASONS-BUILD.md` | 9841-9860 |
-| `57.64b` | &nbsp;&nbsp;&nbsp;&nbsp;The storm's own figure, printed on the bar | `SPEC-SEASONS-BUILD.md` | 9861-9886 |
-| `57.64c` | &nbsp;&nbsp;&nbsp;&nbsp;What was taken from the mockup and what was not | `SPEC-SEASONS-BUILD.md` | 9887-9898 |
-| `57.64d` | &nbsp;&nbsp;&nbsp;&nbsp;Two assertions moved with the geometry, and one of them mattered | `SPEC-SEASONS-BUILD.md` | 9899-9913 |
-| `57.61` | &nbsp;&nbsp;Step 7 — nine sections become six — as built | `SPEC-SEASONS-BUILD.md` | 9962-9987 |
-| `57.65` | &nbsp;&nbsp;A one-pixel seam between the bar's columns | `SPEC-SEASONS-BUILD.md` | 9914-9961 |
-| `57.61a` | &nbsp;&nbsp;&nbsp;&nbsp;The ending sentence left `changeHtml` first, as its own commit | `SPEC-SEASONS-BUILD.md` | 9988-10054 |
-| `57.61b` | &nbsp;&nbsp;&nbsp;&nbsp;The merge itself — six call sites, no rewritten renderer | `SPEC-SEASONS-BUILD.md` | 10055-10095 |
-| `57.61c` | &nbsp;&nbsp;&nbsp;&nbsp;The fold record resets once, and that is a decision | `SPEC-SEASONS-BUILD.md` | 10096-10116 |
-| `57.61d` | &nbsp;&nbsp;&nbsp;&nbsp;Six mutations, and the sixth found a real hole | `SPEC-SEASONS-BUILD.md` | 10117-10148 |
-| `57.61e` | &nbsp;&nbsp;&nbsp;&nbsp;What to judge on glass | `SPEC-SEASONS-BUILD.md` | 10149-10169 |
-| `57.66` | &nbsp;&nbsp;A figure block is divided from the one above it | `SPEC-SEASONS-BUILD.md` | 10170-10196 |
-| `57.66a` | &nbsp;&nbsp;&nbsp;&nbsp;The rule goes above the label, and the label spans | `SPEC-SEASONS-BUILD.md` | 10197-10229 |
-| `57.66b` | &nbsp;&nbsp;&nbsp;&nbsp;Measured, because the fault was a distance | `SPEC-SEASONS-BUILD.md` | 10230-10260 |
-| `57.66c` | &nbsp;&nbsp;&nbsp;&nbsp;The dials, if it reads wrong on glass | `SPEC-SEASONS-BUILD.md` | 10261-10273 |
-| `57.67` | &nbsp;&nbsp;The season clock, in slices — the plan | `SPEC-SEASONS-BUILD.md` | 10274-10294 |
-| `57.67a` | &nbsp;&nbsp;&nbsp;&nbsp;Aaron's four calls, 2026-08-31 | `SPEC-SEASONS-BUILD.md` | 10295-10324 |
-| `57.67b` | &nbsp;&nbsp;&nbsp;&nbsp;The slices | `SPEC-SEASONS-BUILD.md` | 10325-10355 |
-| `57.67c` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A — as built | `SPEC-SEASONS-BUILD.md` | 10356-10408 |
-| `57.67d` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A's gate | `SPEC-SEASONS-BUILD.md` | 10409-10436 |
-| `57.67e` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B — as built | `SPEC-SEASONS-BUILD.md` | 10437-10542 |
-| `57.67f` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B's gate | `SPEC-SEASONS-BUILD.md` | 10543-10602 |
-| `57.67g` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C — as built | `SPEC-SEASONS-BUILD.md` | 10603-10754 |
-| `57.67h` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C closes slice B's known gap — the swath takes the cut | `SPEC-SEASONS-BUILD.md` | 10755-10794 |
-| `57.67i` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C's gate | `SPEC-SEASONS-BUILD.md` | 10795-10856 |
-| `57.67j` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D — press play — as built | `SPEC-SEASONS-BUILD.md` | 10857-10947 |
-| `57.67k` | &nbsp;&nbsp;&nbsp;&nbsp;The loop is its own file, and a wrong sentence came out of it | `SPEC-SEASONS-BUILD.md` | 10948-10977 |
-| `57.67l` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D's gate | `SPEC-SEASONS-BUILD.md` | 10978-11052 |
-| `57.67m` | &nbsp;&nbsp;&nbsp;&nbsp;The scrubber pill ran under the control cluster | `SPEC-SEASONS-BUILD.md` | 11053-11097 |
-| `57.67n` | &nbsp;&nbsp;&nbsp;&nbsp;The pause mark is filled, and it is the cluster's one exception | `SPEC-SEASONS-BUILD.md` | 11098-11138 |
+| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 6350-6638 |
+| `57.45` | &nbsp;&nbsp;How far a storm went — as built | `SPEC-SEASONS-BUILD.md` | 6639-6654 |
+| `57.46` | &nbsp;&nbsp;Distance travelled, ranked against the archive — as built | `SPEC-SEASONS-BUILD.md` | 6818-6873 |
+| `57.47` | &nbsp;&nbsp;The rankings file needs a version of its own — as built | `SPEC-SEASONS-BUILD.md` | 6951-7004 |
+| `57.48` | &nbsp;&nbsp;The comeback, the calendar and the origin — as built | `SPEC-SEASONS-BUILD.md` | 7062-7074 |
+| `57.49` | &nbsp;&nbsp;The loop — as built | `SPEC-SEASONS-BUILD.md` | 7293-7314 |
+| `57.50` | &nbsp;&nbsp;How many other storms were running — as built | `SPEC-SEASONS-BUILD.md` | 7444-7489 |
+| `57.51` | &nbsp;&nbsp;The retired names, derived — as built | `SPEC-SEASONS-BUILD.md` | 7601-7633 |
+| `57.52` | &nbsp;&nbsp;The retired names on screen — as built | `SPEC-SEASONS-BUILD.md` | 7779-7790 |
+| `57.53` | &nbsp;&nbsp;One mark grammar across both screens — as built | `SPEC-SEASONS-BUILD.md` | 8004-8017 |
+| `57.54` | &nbsp;&nbsp;The storm panel, rebuilt — the plan | `SPEC-SEASONS-BUILD.md` | 8100-8122 |
+| `57.54a` | &nbsp;&nbsp;&nbsp;&nbsp;What was actually wrong — measured, not asserted | `SPEC-SEASONS-BUILD.md` | 8123-8175 |
+| `57.54b` | &nbsp;&nbsp;&nbsp;&nbsp;The decision — one row carries the figure, the rank AND the spread | `SPEC-SEASONS-BUILD.md` | 8176-8204 |
+| `57.54c` | &nbsp;&nbsp;&nbsp;&nbsp;The distribution bar — the spread costs zero new bytes | `SPEC-SEASONS-BUILD.md` | 8205-8256 |
+| `57.54d` | &nbsp;&nbsp;&nbsp;&nbsp;The life chart — the one hero | `SPEC-SEASONS-BUILD.md` | 8257-8291 |
+| `57.54e` | &nbsp;&nbsp;&nbsp;&nbsp;ACE, in plain English — the panel currently teaches nothing | `SPEC-SEASONS-BUILD.md` | 8292-8341 |
+| `57.54f` | &nbsp;&nbsp;&nbsp;&nbsp;The sections — nine become six, and the order is a narrative | `SPEC-SEASONS-BUILD.md` | 8342-8381 |
+| `57.54g` | &nbsp;&nbsp;&nbsp;&nbsp;What this is worth — measured on the prototype | `SPEC-SEASONS-BUILD.md` | 8382-8398 |
+| `57.54h` | &nbsp;&nbsp;&nbsp;&nbsp;Two live faults on `main`, found while reading the panel | `SPEC-SEASONS-BUILD.md` | 8399-8419 |
+| `57.54i` | &nbsp;&nbsp;&nbsp;&nbsp;Three things this archive holds and does not use | `SPEC-SEASONS-BUILD.md` | 8420-8455 |
+| `57.54j` | &nbsp;&nbsp;&nbsp;&nbsp;The globe tether — scoped, not planned in detail | `SPEC-SEASONS-BUILD.md` | 8456-8481 |
+| `57.54k` | &nbsp;&nbsp;&nbsp;&nbsp;The build order — reserved section numbers | `SPEC-SEASONS-BUILD.md` | 8482-8553 |
+| `57.55` | &nbsp;&nbsp;Step 1 — the two live faults on `main` — as built | `SPEC-SEASONS-BUILD.md` | 8554-8560 |
+| `57.55a` | &nbsp;&nbsp;&nbsp;&nbsp;The rapid-intensification sentence left the value column | `SPEC-SEASONS-BUILD.md` | 8561-8597 |
+| `57.55b` | &nbsp;&nbsp;&nbsp;&nbsp;The em dash left the markup file, and the sweep widened to reach it | `SPEC-SEASONS-BUILD.md` | 8598-8648 |
+| `57.56` | &nbsp;&nbsp;Step 2 — the distribution bar — as built | `SPEC-SEASONS-BUILD.md` | 8649-8660 |
+| `57.56a` | &nbsp;&nbsp;&nbsp;&nbsp;Three numbers decided the shape, and all three were measured | `SPEC-SEASONS-BUILD.md` | 8661-8685 |
+| `57.56b` | &nbsp;&nbsp;&nbsp;&nbsp;The unit trap, reproduced and then closed | `SPEC-SEASONS-BUILD.md` | 8686-8709 |
+| `57.56c` | &nbsp;&nbsp;&nbsp;&nbsp;What the bar is made of | `SPEC-SEASONS-BUILD.md` | 8710-8739 |
+| `57.56d` | &nbsp;&nbsp;&nbsp;&nbsp;The axis speaks the row's units, and that is the whole contract | `SPEC-SEASONS-BUILD.md` | 8740-8759 |
+| `57.56e` | &nbsp;&nbsp;&nbsp;&nbsp;Two files created now rather than at step 3 | `SPEC-SEASONS-BUILD.md` | 8760-8789 |
+| `57.56f` | &nbsp;&nbsp;&nbsp;&nbsp;Two tokens, and why the mark is not the focus ring | `SPEC-SEASONS-BUILD.md` | 8790-8809 |
+| `57.56g` | &nbsp;&nbsp;&nbsp;&nbsp;Three mutation runs, and one of them found a hole in the suite | `SPEC-SEASONS-BUILD.md` | 8810-8831 |
+| `57.56h` | &nbsp;&nbsp;&nbsp;&nbsp;What is expected to come back wrong, flagged before glass | `SPEC-SEASONS-BUILD.md` | 8832-8845 |
+| `57.57` | &nbsp;&nbsp;Step 3 — the merged row — as built | `SPEC-SEASONS-BUILD.md` | 8846-8884 |
+| `57.57a` | &nbsp;&nbsp;&nbsp;&nbsp;The cut came first, and it was the whole first commit | `SPEC-SEASONS-BUILD.md` | 8885-8921 |
+| `57.57b` | &nbsp;&nbsp;&nbsp;&nbsp;The merged row — one figure, one place | `SPEC-SEASONS-BUILD.md` | 8922-9022 |
+| `57.57c` | &nbsp;&nbsp;&nbsp;&nbsp;The scope sentence becomes one footnote, and it has to name itself | `SPEC-SEASONS-BUILD.md` | 9023-9064 |
+| `57.58` | &nbsp;&nbsp;Step 4 — ACE in plain English — as built | `SPEC-SEASONS-BUILD.md` | 9065-9089 |
+| `57.58a` | &nbsp;&nbsp;&nbsp;&nbsp;It was Tier 2, not the Tier 1 §57.54k promised | `SPEC-SEASONS-BUILD.md` | 9090-9102 |
+| `57.58b` | &nbsp;&nbsp;&nbsp;&nbsp;The count moved into the value rather than being deleted | `SPEC-SEASONS-BUILD.md` | 9103-9118 |
+| `57.58c` | &nbsp;&nbsp;&nbsp;&nbsp;Every number in the sentence is computed, and one of them is a constant | `SPEC-SEASONS-BUILD.md` | 9119-9134 |
+| `57.58d` | &nbsp;&nbsp;&nbsp;&nbsp;What a storm with no ACE gets, and where the obvious guess was wrong | `SPEC-SEASONS-BUILD.md` | 9135-9147 |
+| `57.58e` | &nbsp;&nbsp;&nbsp;&nbsp;The cost, measured, and the lever if it is too much | `SPEC-SEASONS-BUILD.md` | 9148-9171 |
+| `57.58f` | &nbsp;&nbsp;&nbsp;&nbsp;One statistic, one name | `SPEC-SEASONS-BUILD.md` | 9172-9179 |
+| `57.59` | &nbsp;&nbsp;Step 5 — the life chart — as built | `SPEC-SEASONS-BUILD.md` | 9180-9216 |
+| `57.59a` | &nbsp;&nbsp;&nbsp;&nbsp;Two measurements came before any shipping code, as §57.54d required | `SPEC-SEASONS-BUILD.md` | 9217-9263 |
+| `57.59b` | &nbsp;&nbsp;&nbsp;&nbsp;The geometry is the mockup's, to the decimal | `SPEC-SEASONS-BUILD.md` | 9264-9307 |
+| `57.59c` | &nbsp;&nbsp;&nbsp;&nbsp;The colours are the app's, and the mockup's were not | `SPEC-SEASONS-BUILD.md` | 9308-9351 |
+| `57.59d` | &nbsp;&nbsp;&nbsp;&nbsp;Two palette tokens reached CSS for the first time | `SPEC-SEASONS-BUILD.md` | 9352-9371 |
+| `57.59e` | &nbsp;&nbsp;&nbsp;&nbsp;The discs stack, and the number is the place in the LIST | `SPEC-SEASONS-BUILD.md` | 9372-9400 |
+| `57.59f` | &nbsp;&nbsp;&nbsp;&nbsp;Nine mutations, and two of them found real holes | `SPEC-SEASONS-BUILD.md` | 9401-9443 |
+| `57.59h` | &nbsp;&nbsp;&nbsp;&nbsp;The first day label was clipped on half the archive | `SPEC-SEASONS-BUILD.md` | 9444-9489 |
+| `57.59i` | &nbsp;&nbsp;&nbsp;&nbsp;The year stamp was drawn through by a disc on the fourth row | `SPEC-SEASONS-BUILD.md` | 9490-9536 |
+| `57.59g` | &nbsp;&nbsp;&nbsp;&nbsp;What to judge on glass, and the first is step 5's own risk | `SPEC-SEASONS-BUILD.md` | 9537-9561 |
+| `57.60` | &nbsp;&nbsp;Step 6 — the numbered landfalls — as built | `SPEC-SEASONS-BUILD.md` | 9562-9576 |
+| `57.60a` | &nbsp;&nbsp;&nbsp;&nbsp;Four numbers came before the code, and all four said the same thing | `SPEC-SEASONS-BUILD.md` | 9577-9600 |
+| `57.60b` | &nbsp;&nbsp;&nbsp;&nbsp;One function owns the numbers, and it carries two of them | `SPEC-SEASONS-BUILD.md` | 9601-9620 |
+| `57.60c` | &nbsp;&nbsp;&nbsp;&nbsp;The layout is the mockup's, and the badge is NOT the chart's disc | `SPEC-SEASONS-BUILD.md` | 9621-9677 |
+| `57.60d` | &nbsp;&nbsp;&nbsp;&nbsp;It was measured in a browser, because a badge is the `18 of 3` shape | `SPEC-SEASONS-BUILD.md` | 9678-9696 |
+| `57.60e` | &nbsp;&nbsp;&nbsp;&nbsp;Nine mutations, eight bite, and the ninth is honest rather than a hole | `SPEC-SEASONS-BUILD.md` | 9697-9711 |
+| `57.60f` | &nbsp;&nbsp;&nbsp;&nbsp;Confirmed on glass, and what was judged | `SPEC-SEASONS-BUILD.md` | 9712-9746 |
+| `57.60g` | &nbsp;&nbsp;&nbsp;&nbsp;Two faults the mockup pass found, and one of them had shipped | `SPEC-SEASONS-BUILD.md` | 9747-9784 |
+| `57.63` | &nbsp;&nbsp;The distribution bar's mark failed contrast on the archive panel | `SPEC-SEASONS-BUILD.md` | 9785-9839 |
+| `57.64` | &nbsp;&nbsp;The distribution bar, restyled to the mockup | `SPEC-SEASONS-BUILD.md` | 9840-9849 |
+| `57.64a` | &nbsp;&nbsp;&nbsp;&nbsp;The baseline and its end ticks were the substance of it | `SPEC-SEASONS-BUILD.md` | 9850-9869 |
+| `57.64b` | &nbsp;&nbsp;&nbsp;&nbsp;The storm's own figure, printed on the bar | `SPEC-SEASONS-BUILD.md` | 9870-9895 |
+| `57.64c` | &nbsp;&nbsp;&nbsp;&nbsp;What was taken from the mockup and what was not | `SPEC-SEASONS-BUILD.md` | 9896-9907 |
+| `57.64d` | &nbsp;&nbsp;&nbsp;&nbsp;Two assertions moved with the geometry, and one of them mattered | `SPEC-SEASONS-BUILD.md` | 9908-9922 |
+| `57.61` | &nbsp;&nbsp;Step 7 — nine sections become six — as built | `SPEC-SEASONS-BUILD.md` | 9971-9996 |
+| `57.65` | &nbsp;&nbsp;A one-pixel seam between the bar's columns | `SPEC-SEASONS-BUILD.md` | 9923-9970 |
+| `57.61a` | &nbsp;&nbsp;&nbsp;&nbsp;The ending sentence left `changeHtml` first, as its own commit | `SPEC-SEASONS-BUILD.md` | 9997-10063 |
+| `57.61b` | &nbsp;&nbsp;&nbsp;&nbsp;The merge itself — six call sites, no rewritten renderer | `SPEC-SEASONS-BUILD.md` | 10064-10104 |
+| `57.61c` | &nbsp;&nbsp;&nbsp;&nbsp;The fold record resets once, and that is a decision | `SPEC-SEASONS-BUILD.md` | 10105-10125 |
+| `57.61d` | &nbsp;&nbsp;&nbsp;&nbsp;Six mutations, and the sixth found a real hole | `SPEC-SEASONS-BUILD.md` | 10126-10157 |
+| `57.61e` | &nbsp;&nbsp;&nbsp;&nbsp;What to judge on glass | `SPEC-SEASONS-BUILD.md` | 10158-10178 |
+| `57.66` | &nbsp;&nbsp;A figure block is divided from the one above it | `SPEC-SEASONS-BUILD.md` | 10179-10205 |
+| `57.66a` | &nbsp;&nbsp;&nbsp;&nbsp;The rule goes above the label, and the label spans | `SPEC-SEASONS-BUILD.md` | 10206-10238 |
+| `57.66b` | &nbsp;&nbsp;&nbsp;&nbsp;Measured, because the fault was a distance | `SPEC-SEASONS-BUILD.md` | 10239-10269 |
+| `57.66c` | &nbsp;&nbsp;&nbsp;&nbsp;The dials, if it reads wrong on glass | `SPEC-SEASONS-BUILD.md` | 10270-10282 |
+| `57.67` | &nbsp;&nbsp;The season clock, in slices — the plan | `SPEC-SEASONS-BUILD.md` | 10283-10303 |
+| `57.67a` | &nbsp;&nbsp;&nbsp;&nbsp;Aaron's four calls, 2026-08-31 | `SPEC-SEASONS-BUILD.md` | 10304-10333 |
+| `57.67b` | &nbsp;&nbsp;&nbsp;&nbsp;The slices | `SPEC-SEASONS-BUILD.md` | 10334-10364 |
+| `57.67c` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A — as built | `SPEC-SEASONS-BUILD.md` | 10365-10417 |
+| `57.67d` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A's gate | `SPEC-SEASONS-BUILD.md` | 10418-10445 |
+| `57.67e` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B — as built | `SPEC-SEASONS-BUILD.md` | 10446-10551 |
+| `57.67f` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B's gate | `SPEC-SEASONS-BUILD.md` | 10552-10611 |
+| `57.67g` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C — as built | `SPEC-SEASONS-BUILD.md` | 10612-10763 |
+| `57.67h` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C closes slice B's known gap — the swath takes the cut | `SPEC-SEASONS-BUILD.md` | 10764-10803 |
+| `57.67i` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C's gate | `SPEC-SEASONS-BUILD.md` | 10804-10865 |
+| `57.67j` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D — press play — as built | `SPEC-SEASONS-BUILD.md` | 10866-10956 |
+| `57.67k` | &nbsp;&nbsp;&nbsp;&nbsp;The loop is its own file, and a wrong sentence came out of it | `SPEC-SEASONS-BUILD.md` | 10957-10986 |
+| `57.67l` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D's gate | `SPEC-SEASONS-BUILD.md` | 10987-11061 |
+| `57.67m` | &nbsp;&nbsp;&nbsp;&nbsp;The scrubber pill ran under the control cluster | `SPEC-SEASONS-BUILD.md` | 11062-11106 |
+| `57.67n` | &nbsp;&nbsp;&nbsp;&nbsp;The pause mark is filled, and it is the cluster's one exception | `SPEC-SEASONS-BUILD.md` | 11107-11147 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3309-3328 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3329-3372 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3373-3399 |
@@ -461,7 +461,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 295,465 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 108,861 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 639,634 | 168 |
+| `SPEC-SEASONS-BUILD.md` | 640,182 | 168 |
 | `SPEC-UI.md` | 251,221 | 18 |
 | `SPEC.md` | 195,282 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

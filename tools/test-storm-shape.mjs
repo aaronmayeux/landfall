@@ -11,8 +11,8 @@
  * than written into a comment and trusted. Every one of those counts is a
  * number a design decision was made on:
  *
- * - **14 comebacks**, which is why the floor is 34 kt and not 64. At 64 it is
- *   181 storms — a qualifier that fires too often to be worth a sentence.
+ * - **15 comebacks**, which is why the floor is 34 kt and not 64. At 64 it is
+ *   182 storms — a qualifier that fires too often to be worth a sentence.
  * - **11 Atlantic storms east of 30°W and north of 20°N**, which is why
  *   `origin` has three answers instead of two. A boolean tells each of those
  *   it formed inside the basin, which is false and reads perfectly.
@@ -35,6 +35,12 @@
 
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
+
+/* The whole-basin files come off the index, never typed. They were written out
+ * here, and the 2026-10-03 East Pacific revision renamed one and turned this
+ * suite red for a month. The index is what the runner and the phone read. */
+const BASIN_FILES = Object.values(JSON.parse(readFileSync('seasons/index.json', 'utf8')).basins)
+  .map((b) => b.file.replace(/^\//, ''));
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 process.chdir(ROOT);
@@ -87,8 +93,7 @@ section('JEANNE 2004 — the comeback, end to end through stormFacts');
 section('THE COMEBACK IS RARE, AND THE FLOOR IS WHAT MAKES IT RARE');
 {
   const all = [];
-  for (const f of ['seasons/data/hurdat2-atlantic-2025-02272026.txt',
-    'seasons/data/hurdat2-epacific-2025-02272026.txt']) {
+  for (const f of BASIN_FILES) {
     all.push(...parseHurdat2(readFileSync(f, 'utf8')).storms);
   }
 
@@ -97,8 +102,8 @@ section('THE COMEBACK IS RARE, AND THE FLOOR IS WHAT MAKES IT RARE');
     + `\`seasons/data/*.txt\` reads every storm twice and returns 6,532. Got ${all.length}`);
 
   const backs = all.filter((s) => comeback(ordered(s)));
-  ok(backs.length === 14,
-    `14 storms in the archive fell to a depression and came back a hurricane. Got ${backs.length}`);
+  ok(backs.length === 15,
+    `15 storms in the archive fell to a depression and came back a hurricane. Got ${backs.length}`);
 
   const names = backs.map((s) => `${s.id}`);
   for (const id of ['AL112004', 'AL112009', 'AL292020', 'EP101994', 'EP102024']) {
@@ -136,8 +141,8 @@ section('THE COMEBACK IS RARE, AND THE FLOOR IS WHAT MAKES IT RARE');
     }
     return false;
   });
-  ok(loose.length === 181,
-    `a floor at hurricane force instead of ${SEASONS.comebackFloorKt} kt catches 181 storms `
+  ok(loose.length === 182,
+    `a floor at hurricane force instead of ${SEASONS.comebackFloorKt} kt catches 182 storms `
     + `rather than 14, which is a qualifier that fires too often to say anything. Got ${loose.length}`);
   ok(loose.length > backs.length * 10,
     'and the gap between the two is an order of magnitude, which is why the floor is low');
@@ -292,8 +297,8 @@ section('SILENCE IS THE ORDINARY CASE FOR TWO OF THE THREE');
   const katrina = stormFacts(storm('al122005'));
   ok(katrina.comeback === null, 'Katrina made no comeback');
   ok(comebackHtml(katrina.comeback) === '',
-    '==> AND NOTHING IS SAID ABOUT IT. <== 14 storms in 3,266 have one. A sentence reading '
-    + '\u201Cit did not weaken and recover\u201D on the other 3,252 is a qualifier that fires '
+    '==> AND NOTHING IS SAID ABOUT IT. <== 15 storms in 3,266 have one. A sentence reading '
+    + '\u201Cit did not weaken and recover\u201D on the other 3,251 is a qualifier that fires '
     + 'everywhere and therefore qualifies nothing');
   ok(katrina.seasonWindow === null && seasonWindowHtml(katrina.seasonWindow) === '',
     'and an in-season storm says nothing about the calendar either');
@@ -482,8 +487,7 @@ section('A FIGURE OF EIGHT — THE BIGGEST LOOP IS THE ONE REPORTED');
 section('THE LOOP IS RARE, AND THE FLOOR IS WHAT MAKES IT RARE');
 {
   const all = [];
-  for (const f of ['seasons/data/hurdat2-atlantic-2025-02272026.txt',
-    'seasons/data/hurdat2-epacific-2025-02272026.txt']) {
+  for (const f of BASIN_FILES) {
     all.push(...parseHurdat2(readFileSync(f, 'utf8')).storms);
   }
 
