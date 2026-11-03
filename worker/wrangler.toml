@@ -38,8 +38,10 @@ workers_dev = true
 # Preview URLs: OFF. They mint a NEW public hostname per uploaded version, and
 # this Worker has exactly one reason to be reachable from the internet. Every
 # extra public hostname on a thing holding a cache-bypass key is surface bought
-# for nothing. Non-production branches still upload versions; they just do not
-# each get their own address.
+# for nothing. Workers Builds has ONE trigger, `main` only — the non-production
+# branch trigger was deleted 2026-11-03 because the data branches (archive,
+# seasons-live, perf-history) have no worker/ folder and every push to them
+# failed with "root directory not found".
 preview_urls = false
 
 # Five minutes. The cron cadence must be at least as fast as the freshest thing

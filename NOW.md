@@ -651,6 +651,7 @@ go looking, and because a trap copied into two files goes stale in one of them.*
 | A cache that never serves a fresh answer | `FRESH_SECONDS` equalling the cron period. `functions/api/nhc/advisory.js` is still `5 * 60` against a 5-minute cron — the only such collision among warmed routes. | §4.13 |
 | An upstream URL built from client input | Only `functions/api/nws/alert.js` does this. The id must match NWS's CAP URN anchored at BOTH ends or the function fetches an attacker's host with our User-Agent from inside Cloudflare's network. | §48.21 |
 | Landfall counts moving with nothing in the diff | The coastline pin is a deliberate hand brake at `natural-earth-vector@v5.1.2`. Moving it means re-running `node tools/seasons-landfall.mjs --check` and comparing the agreement figure. | §57.7a |
+| `landfall-warm` builds failing with "root directory not found" | NOT the cron — that has been clean (`ok:true, failed:0` every cycle, Workers Logs). It was the Workers Builds non-production trigger firing on data-branch pushes that have no `worker/`. Deleted 2026-11-03; only the `main` trigger remains. If failures reappear, someone re-added a branch trigger. | `worker/wrangler.toml` |
 | Pages preview builds climbing toward the 500/month cap | A push to a non-production branch can build a preview. Ours appears not to, but that is evidence rather than proof. The fix is the branch-control setting. | §57.33 |
 
 **TWO RULES HAVE NO SPEC HOME YET AND SHOULD GET ONE.** Both were learned
