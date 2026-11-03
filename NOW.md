@@ -99,9 +99,26 @@ paragraph carrying four full place names in one sentence earns its length
 hedging; and whether the Wall's `Came ashore` column reads honest or inflated in
 the 1880s now that 92 storms moved into it.
 
+**5. THE ARCHIVE RANK SECTION IS BACK — CONFIRM IT ON GLASS.** It was missing on
+every storm from 2026-10-03 to 2026-11-03: the East Pacific revision moved the
+derived name to `rankings-v2-02272026-092926.json` and nobody ran
+`tools/seasons-rankings.mjs`. Rebuilt and deployed. Open any archive storm and
+look for its ranks. §57.44.
+
+**6. PERF-AUDIT'S FIRST RUN ON `ubuntu-24.04` IS UNSEEN.** It failed every night
+from 2026-10-23 (Playwright 1.56.0 will not install on 26.04). The runner is
+pinned back now; check the next nightly went green before trusting its numbers.
+
 ---
 
 ## NEXT UP — real work, nothing blocking it
+
+- **`seasons/data/epacific-landfalls-v3-02272026.json` is an orphan.** The
+  revision built `…-092926.json` beside it and nothing reads the old one any
+  more. §57.34 rule 3 says it should have been deleted in the same commit.
+- **`test-home-ida.mjs` fails in Central time, passes in UTC.** Two rail labels
+  (`adv 010 +6h`/`+7h`) get a dotted vertical through them. CI runs UTC so it
+  stays green — but Aaron reads the app in Central, so this may be real on glass.
 
 **THE SURGE COAST DIM HAS NEVER RUN, AND ITS TEST IS GREEN OVER IT.**
 `dimCoast` in `map/layers/surge.js` reads `line-opacity` off `coast-glow` and
