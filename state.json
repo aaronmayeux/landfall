@@ -208,5 +208,11 @@
     "lastModified": "Tue, 27 Oct 2026 02:30:12 GMT",
     "bytes": 2663,
     "sha256": "715f3cc9a41f5e6cfebba5b0545d6bf698c1a9c9cf8c36672f9a09e6280540e2"
+  },
+  "btk/2026/bcp042026.dat": {
+    "etag": "\"f77-65fa1d212632a\"",
+    "lastModified": "Fri, 06 Nov 2026 20:54:39 GMT",
+    "bytes": 3959,
+    "sha256": "8c989c2fedeb5baaa5a9cf0caa62fb42c80ee553192d5ba1a377749424138f2a"
   }
 }
