@@ -210,9 +210,9 @@
     "sha256": "715f3cc9a41f5e6cfebba5b0545d6bf698c1a9c9cf8c36672f9a09e6280540e2"
   },
   "btk/2026/bcp042026.dat": {
-    "etag": "\"104f-65fa589f928b4\"",
-    "lastModified": "Sat, 07 Nov 2026 01:20:49 GMT",
-    "bytes": 4175,
-    "sha256": "c935d6feabf77433e125e9d3168ec44bba48bafb02c8ff15b7e584afd35c02d9"
+    "etag": "\"1127-65faa2f847813\"",
+    "lastModified": "Sat, 07 Nov 2026 06:53:26 GMT",
+    "bytes": 4391,
+    "sha256": "dca1048f364110b270e614e46ed1d7d7e9b7da4d076a0c2d78b3ad71fd3e34f2"
   }
 }
