@@ -1,0 +1,284 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b6d43a1452375fd55ee0f2458a0f9ceb117e37f6.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b6d43a1452375fd55ee0f2458a0f9ceb117e37f6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b6d43a1452375fd55ee0f2458a0f9ceb117e37f6.001.1",
+                "areaDesc": "Northampton; Hertford; Gates; Pasquotank; Camden; Western Currituck; Bertie; Chowan; Perquimans; Eastern Currituck; Greensville; Sussex; Surry; Southampton; Chesapeake; Virginia Beach; Northampton; York; Newport News; Hampton/Poquoson; Isle of Wight; Suffolk; Norfolk; Portsmouth",
+                "geocode": {
+                    "SAME": [
+                        "037131",
+                        "037091",
+                        "037073",
+                        "037139",
+                        "037029",
+                        "037053",
+                        "037015",
+                        "037041",
+                        "037143",
+                        "051081",
+                        "051595",
+                        "051183",
+                        "051181",
+                        "051175",
+                        "051620",
+                        "051550",
+                        "051810",
+                        "051131",
+                        "051199",
+                        "051735",
+                        "051700",
+                        "051650",
+                        "051093",
+                        "051800",
+                        "051710",
+                        "051740"
+                    ],
+                    "UGC": [
+                        "NCZ012",
+                        "NCZ013",
+                        "NCZ014",
+                        "NCZ015",
+                        "NCZ016",
+                        "NCZ017",
+                        "NCZ030",
+                        "NCZ031",
+                        "NCZ032",
+                        "NCZ102",
+                        "VAZ087",
+                        "VAZ088",
+                        "VAZ089",
+                        "VAZ092",
+                        "VAZ097",
+                        "VAZ098",
+                        "VAZ100",
+                        "VAZ523",
+                        "VAZ524",
+                        "VAZ525",
+                        "VAZ528",
+                        "VAZ529",
+                        "VAZ530",
+                        "VAZ531"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NCZ012",
+                    "https://api.weather.gov/zones/forecast/NCZ013",
+                    "https://api.weather.gov/zones/forecast/NCZ014",
+                    "https://api.weather.gov/zones/forecast/NCZ015",
+                    "https://api.weather.gov/zones/forecast/NCZ016",
+                    "https://api.weather.gov/zones/forecast/NCZ017",
+                    "https://api.weather.gov/zones/forecast/NCZ030",
+                    "https://api.weather.gov/zones/forecast/NCZ031",
+                    "https://api.weather.gov/zones/forecast/NCZ032",
+                    "https://api.weather.gov/zones/forecast/NCZ102",
+                    "https://api.weather.gov/zones/forecast/VAZ087",
+                    "https://api.weather.gov/zones/forecast/VAZ088",
+                    "https://api.weather.gov/zones/forecast/VAZ089",
+                    "https://api.weather.gov/zones/forecast/VAZ092",
+                    "https://api.weather.gov/zones/forecast/VAZ097",
+                    "https://api.weather.gov/zones/forecast/VAZ098",
+                    "https://api.weather.gov/zones/forecast/VAZ100",
+                    "https://api.weather.gov/zones/forecast/VAZ523",
+                    "https://api.weather.gov/zones/forecast/VAZ524",
+                    "https://api.weather.gov/zones/forecast/VAZ525",
+                    "https://api.weather.gov/zones/forecast/VAZ528",
+                    "https://api.weather.gov/zones/forecast/VAZ529",
+                    "https://api.weather.gov/zones/forecast/VAZ530",
+                    "https://api.weather.gov/zones/forecast/VAZ531"
+                ],
+                "references": [],
+                "sent": "2026-11-06T12:06:00-05:00",
+                "effective": "2026-11-06T12:06:00-05:00",
+                "onset": "2026-11-06T12:06:00-05:00",
+                "expires": "2026-11-06T20:00:00-05:00",
+                "ends": "2026-11-06T20:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flood Watch issued November 6 at 12:06PM EST until November 6 at 8:00PM EST by NWS Wakefield VA",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of northeast North Carolina, including the\nfollowing areas, Bertie, Camden, Chowan, Eastern Currituck, Gates,\nHertford, Northampton, Pasquotank, Perquimans and Western Currituck\nand Virginia, including the following areas, Chesapeake,\nGreensville, Hampton/Poquoson, Isle of Wight, Newport News,\nNorfolk, Northampton, Portsmouth, Southampton, Suffolk, Surry,\nSussex, Virginia Beach and York.\n\n* WHEN...Until 8 PM EST this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nStorm drains and ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- A cold front moving through the area could cause training storms\nproducing heavy rainfall. Rainfall totals may reach 2-4\" for\nlocalized areas.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KAKQ 061706"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT UNTIL 8 PM EST THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAKQ.FA.A.0006.261106T1706Z-261107T0100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-06T20:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bcc6c94aeaa277185072b5089f6e27464f018324.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bcc6c94aeaa277185072b5089f6e27464f018324.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.bcc6c94aeaa277185072b5089f6e27464f018324.001.1",
+                "areaDesc": "Northern Bristol; Western Plymouth; Eastern Plymouth; Southern Bristol; Southern Plymouth; Barnstable; Dukes; Northwest Providence; Southeast Providence; Western Kent; Eastern Kent; Bristol; Washington; Newport; Block Island",
+                "geocode": {
+                    "SAME": [
+                        "025005",
+                        "025023",
+                        "025021",
+                        "025001",
+                        "025007",
+                        "044007",
+                        "044003",
+                        "044001",
+                        "044009",
+                        "044005"
+                    ],
+                    "UGC": [
+                        "MAZ017",
+                        "MAZ018",
+                        "MAZ019",
+                        "MAZ020",
+                        "MAZ021",
+                        "MAZ022",
+                        "MAZ023",
+                        "RIZ001",
+                        "RIZ002",
+                        "RIZ003",
+                        "RIZ004",
+                        "RIZ005",
+                        "RIZ006",
+                        "RIZ007",
+                        "RIZ008"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/MAZ017",
+                    "https://api.weather.gov/zones/forecast/MAZ018",
+                    "https://api.weather.gov/zones/forecast/MAZ019",
+                    "https://api.weather.gov/zones/forecast/MAZ020",
+                    "https://api.weather.gov/zones/forecast/MAZ021",
+                    "https://api.weather.gov/zones/forecast/MAZ022",
+                    "https://api.weather.gov/zones/forecast/MAZ023",
+                    "https://api.weather.gov/zones/forecast/RIZ001",
+                    "https://api.weather.gov/zones/forecast/RIZ002",
+                    "https://api.weather.gov/zones/forecast/RIZ003",
+                    "https://api.weather.gov/zones/forecast/RIZ004",
+                    "https://api.weather.gov/zones/forecast/RIZ005",
+                    "https://api.weather.gov/zones/forecast/RIZ006",
+                    "https://api.weather.gov/zones/forecast/RIZ007",
+                    "https://api.weather.gov/zones/forecast/RIZ008"
+                ],
+                "references": [],
+                "sent": "2026-11-06T00:54:00-05:00",
+                "effective": "2026-11-06T00:54:00-05:00",
+                "onset": "2026-11-06T04:00:00-05:00",
+                "expires": "2026-11-06T15:00:00-05:00",
+                "ends": "2026-11-07T10:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Boston/Norton MA",
+                "headline": "Flood Watch issued November 6 at 12:54AM EST until November 7 at 10:00AM EST by NWS Boston/Norton MA",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of southeastern Massachusetts, including the\nfollowing areas, Barnstable, Dukes, Plymouth and Bristol counties,\nand Rhode Island, including the following areas, Block Island,\nBristol, Kent, Newport, Providence and Washington counties.\n\n* WHEN...From 4 AM EST early this morning through Saturday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- Periods of heavy rain today through Saturday morning may result\nin an area of 2 to 4 inches of rainfall across RI and Southeast\nMA, with a low risk (less than 30 percent) of isolated amounts of\n5 to 6 inches.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFABOX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KBOX 060554"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM 4 AM EST EARLY THIS MORNING THROUGH SATURDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KBOX.FA.A.0006.261106T0900Z-261107T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-07T10:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.1843c66f4017da99c9bcb8d115cf25eb6023f0a3.001.1,2026-11-05T11:37:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-11-06T17:47:05+00:00"
+}

@@ -1,0 +1,168 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cfc37e54e15e99be93ce5527873e87ce5fe73124.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -112.68,
+                            36.28
+                        ],
+                        [
+                            -112.59,
+                            36.16
+                        ],
+                        [
+                            -112.56,
+                            36.08
+                        ],
+                        [
+                            -112.51,
+                            36.04
+                        ],
+                        [
+                            -112.44,
+                            35.94
+                        ],
+                        [
+                            -112.37,
+                            35.79
+                        ],
+                        [
+                            -112.48,
+                            35.78
+                        ],
+                        [
+                            -112.48,
+                            35.87
+                        ],
+                        [
+                            -112.57,
+                            36.01
+                        ],
+                        [
+                            -112.62,
+                            36.04
+                        ],
+                        [
+                            -112.63,
+                            36.11
+                        ],
+                        [
+                            -112.79,
+                            36.3
+                        ],
+                        [
+                            -112.77,
+                            36.3
+                        ],
+                        [
+                            -112.75,
+                            36.33
+                        ],
+                        [
+                            -112.68,
+                            36.28
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cfc37e54e15e99be93ce5527873e87ce5fe73124.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.cfc37e54e15e99be93ce5527873e87ce5fe73124.001.1",
+                "areaDesc": "Coconino, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004005"
+                    ],
+                    "UGC": [
+                        "AZC005"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC005"
+                ],
+                "references": [],
+                "sent": "2026-11-03T02:05:00-07:00",
+                "effective": "2026-11-03T02:05:00-07:00",
+                "onset": "2026-11-03T02:05:00-07:00",
+                "expires": "2026-11-03T09:00:00-07:00",
+                "ends": "2026-11-03T09:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flash Flood Warning issued November 3 at 2:05AM MST until November 3 at 9:00AM MST by NWS Flagstaff AZ",
+                "description": "FFWFGZ\n\nThe National Weather Service in Flagstaff has issued a\n\n* Flash Flood Warning for...\nThe Havasu Creek basin in...\nCoconino County in north central Arizona...\n\n* Until 900 AM MST Tuesday.\n\n* At 205 AM MST, a river gauge on Cataract Creek reported a rapid\nrise of 5.38 feet as a result of heavy rain far upstream. A flood\nwave is traveling through Cataract/Havasu Creek. Estimated time for\nimpacts to begin at Supai is between 9 AM to noon MST, though this\nmay change. Stay tuned to future updates for refinements on this\nestimate.\n\nHAZARD...Life threatening flash flooding. Heavy rain producing\nflash flooding in and around the Havasu Creek basin.\n\nSOURCE...River gauge reported.\n\nIMPACT...Life threatening flash flooding of areas in and around the\nHavasu Creek basin.\n\n* For Cataract Creek at Cataract Creek Below Heather Wash:\nAt 1:30am the stage was 4.46 feet.\nFlood Stage is 7.5 feet.\nImpacts:\nAt 7.5 feet: 450 cfs flow. May cause minor flooding downstream in\nSupai campground 4 to 7 hours later.\nAt 10.0 feet: 1520 cfs flow. May cause moderate flooding downstream\nin Suapi village 4 to 7 hours later.\n\nSome locations that will experience flash flooding include...\nSupai, Havasupai Reservation, Little Navajo Falls, Mooney Falls and\nBeaver Falls.\n\nThis includes the Colorado River between river miles 156 and 158.\n\nThis includes the following recreation areas and campgrounds...\nVery Last Chance Camp Site.\n\nThis includes the following swimming holes...\nAll swimming holes on Havasu Creek near Supai.\n\nThis includes the following creeks, washes and rivers...\nHeather Wash, Sinyella Canyon, Little Coyote Canyon, Pasture Wash,\nHavasu Creek, Black Tank Wash, Colorado River and Coconino Wash.",
+                "instruction": "Campers and hikers should hustle to higher ground immediately! Stay\naway from creeks and washes!\n\nFoot bridges will be washed out in Supai Campground. Some campsites\nwill be flooded. Campers may be stranded in portions of the\ncampground.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KFGZ 030905"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGZ.FF.W.0217.261103T0905Z-261103T1600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-03T09:00:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 9:00 AM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 9:00 AM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-03T14:57:16+00:00"
+}

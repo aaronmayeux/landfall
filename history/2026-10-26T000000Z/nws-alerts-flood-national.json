@@ -1,0 +1,141 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4ece975a002165be88efd68d217c3aac5bc82ac1.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -103.57,
+                            34.87
+                        ],
+                        [
+                            -103.72,
+                            34.69
+                        ],
+                        [
+                            -103.46,
+                            34.69
+                        ],
+                        [
+                            -103.36,
+                            34.78
+                        ],
+                        [
+                            -103.35,
+                            34.85
+                        ],
+                        [
+                            -103.52,
+                            34.9
+                        ],
+                        [
+                            -103.57,
+                            34.87
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4ece975a002165be88efd68d217c3aac5bc82ac1.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4ece975a002165be88efd68d217c3aac5bc82ac1.001.1",
+                "areaDesc": "Curry, NM; Quay, NM",
+                "geocode": {
+                    "SAME": [
+                        "035009",
+                        "035037"
+                    ],
+                    "UGC": [
+                        "NMC009",
+                        "NMC037"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC009",
+                    "https://api.weather.gov/zones/county/NMC037"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.91d773ff81fa82991e7d84d4196426cbea5677db.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.91d773ff81fa82991e7d84d4196426cbea5677db.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-25T16:40:00-06:00"
+                    }
+                ],
+                "sent": "2026-10-25T17:51:00-06:00",
+                "effective": "2026-10-25T17:51:00-06:00",
+                "onset": "2026-10-25T17:51:00-06:00",
+                "expires": "2026-10-25T19:45:00-06:00",
+                "ends": "2026-10-25T19:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flash Flood Warning issued October 25 at 5:51PM MDT until October 25 at 7:45PM MDT by NWS Albuquerque NM",
+                "description": "At 551 PM MDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 2 and 3.5 inches of rain have\nfallen. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and as well as other poor drainage and\nlow-lying areas.\n\nSome locations that will experience flash flooding include...\nForrest.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KABQ 252351"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 745 PM MDT THIS EVENING FOR NORTHWESTERN CURRY AND SOUTH CENTRAL QUAY COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FF.W.0232.000000T0000Z-261026T0145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-25T19:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-26T00:00:00+00:00"
+}

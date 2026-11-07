@@ -1,0 +1,24 @@
+en Español
+
+000
+ABNT20 KNHC 230535
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 AM EDT Fri Oct 23 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Subtropical Central Atlantic:
+A trough of low pressure located several hundred miles east of 
+Bermuda is producing a large area of disorganized showers and 
+thunderstorms. Further development of this system is not expected as 
+it moves north-northeastward into increasingly unfavorable 
+environmental conditions during the next day or so. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...near 0 percent.
+
+$$
+Forecaster Gibbs
+  

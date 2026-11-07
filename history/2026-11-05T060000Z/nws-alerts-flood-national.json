@@ -1,0 +1,306 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dca957cf348f1e25e49abc5de58731dde10e1cf3.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.59,
+                            34.84
+                        ],
+                        [
+                            -84.46,
+                            34.96
+                        ],
+                        [
+                            -84.28,
+                            34.89
+                        ],
+                        [
+                            -84.51,
+                            34.76
+                        ],
+                        [
+                            -84.59,
+                            34.84
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dca957cf348f1e25e49abc5de58731dde10e1cf3.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.dca957cf348f1e25e49abc5de58731dde10e1cf3.001.1",
+                "areaDesc": "Fannin, GA; Gilmer, GA",
+                "geocode": {
+                    "SAME": [
+                        "013111",
+                        "013123"
+                    ],
+                    "UGC": [
+                        "GAC111",
+                        "GAC123"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC111",
+                    "https://api.weather.gov/zones/county/GAC123"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8fbfacca30b4b930d95c844fd9942260ac970248.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.8fbfacca30b4b930d95c844fd9942260ac970248.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-04T22:47:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-05T01:21:00-05:00",
+                "effective": "2026-11-05T01:21:00-05:00",
+                "onset": "2026-11-05T01:21:00-05:00",
+                "expires": "2026-11-05T02:30:00-05:00",
+                "ends": "2026-11-05T02:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Peachtree City GA",
+                "headline": "Flash Flood Warning issued November 5 at 1:21AM EST until November 5 at 2:30AM EST by NWS Peachtree City GA",
+                "description": "FFWFFC\n\nThe National Weather Service in Peachtree City has extended the\n\n* Flash Flood Warning for...\nNorthwestern Fannin County in north central Georgia...\nNorth Central Gilmer County in north central Georgia...\n\n* Until 230 AM EST.\n\n* At 121 AM EST, local law enforcement reported thunderstorms\nproducing heavy rain across the warned area. Between 5 and 6 inches\nof rain have fallen. The expected rainfall rate is 1.5 to 2.5\ninches in 1 hour. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing.\n\nFLASH FLOOD EMERGENCY for Southern Fannin and Northern Gilmer. This\nis a PARTICULARLY DANGEROUS SITUATION. SEEK HIGHER GROUND NOW!\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Law enforcement reported.\n\nIMPACT...This is a PARTICULARLY DANGEROUS SITUATION. SEEK HIGHER\nGROUND NOW! Life threatening flash flooding of low water\ncrossings, small creeks and streams, urban areas,\nhighways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nBlue Ridge, Higdon and Colwell.",
+                "instruction": "Move to higher ground now! This is an extremely dangerous and\nlife-threatening situation. Do not attempt to travel unless you are\nfleeing an area subject to flooding or under an evacuation order.\n\nTurn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFFC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KFFC 050621"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD EMERGENCY FOR SOUTHERN FANNIN AND NORTHERN GILMER"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CATASTROPHIC"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KFFC.FF.W.0082.000000T0000Z-261105T0730Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-05T02:30:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.7c06a42e9867186b0290c23d2ada74903bbf226d.001.1,2026-11-04T21:30:00-05:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD EMERGENCY this area til 2:30 AM EST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD EMERGENCY is in effect for this area until 2:30 AM EST. This is an extremely dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8f24ab6b8a6264311982f9d10e5c4e3e356f064b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.73,
+                            34.61
+                        ],
+                        [
+                            -84.72,
+                            34.61
+                        ],
+                        [
+                            -84.72,
+                            34.62
+                        ],
+                        [
+                            -84.74,
+                            34.62
+                        ],
+                        [
+                            -84.75,
+                            34.61
+                        ],
+                        [
+                            -84.86,
+                            34.62
+                        ],
+                        [
+                            -84.84,
+                            34.79
+                        ],
+                        [
+                            -84.58,
+                            34.99
+                        ],
+                        [
+                            -83.94,
+                            34.99
+                        ],
+                        [
+                            -84.47,
+                            34.59
+                        ],
+                        [
+                            -84.73,
+                            34.61
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8f24ab6b8a6264311982f9d10e5c4e3e356f064b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.8f24ab6b8a6264311982f9d10e5c4e3e356f064b.001.1",
+                "areaDesc": "Fannin, GA; Gilmer, GA; Murray, GA; Union, GA",
+                "geocode": {
+                    "SAME": [
+                        "013111",
+                        "013123",
+                        "013213",
+                        "013291"
+                    ],
+                    "UGC": [
+                        "GAC111",
+                        "GAC123",
+                        "GAC213",
+                        "GAC291"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC111",
+                    "https://api.weather.gov/zones/county/GAC123",
+                    "https://api.weather.gov/zones/county/GAC213",
+                    "https://api.weather.gov/zones/county/GAC291"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9819fe7064af1cba829f6918e00286e296a53afc.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9819fe7064af1cba829f6918e00286e296a53afc.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-04T20:55:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-04T23:08:00-05:00",
+                "effective": "2026-11-04T23:08:00-05:00",
+                "onset": "2026-11-04T23:08:00-05:00",
+                "expires": "2026-11-05T03:00:00-05:00",
+                "ends": "2026-11-05T03:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Peachtree City GA",
+                "headline": "Flash Flood Warning issued November 4 at 11:08PM EST until November 5 at 3:00AM EST by NWS Peachtree City GA",
+                "description": "At 1108 PM EST, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 3 and 5 inches of rain have\nfallen. Additional rainfall amounts of 1 to 3 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nChatsworth, Ellijay, Blue Ridge, Eton, East Ellijay, Morganton,\nColwell, Cherry Log, Higdon, Mountaintown, Jones Mill, Epworth,\nConasauga Lake, Tails Creek, Cohutta Wilderness, Talona, Mineral\nBluff, Roundtop, Fort Mountain State Park and Loving.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSFFC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS72 KFFC 050408"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 3 AM EST THURSDAY FOR FANNIN, GILMER, NORTHWESTERN UNION AND MURRAY COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KFFC.FF.W.0081.000000T0000Z-261105T0800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-05T03:00:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 3:00 AM EST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 3:00 AM EST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-05T06:21:37+00:00"
+}

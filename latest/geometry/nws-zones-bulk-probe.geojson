@@ -1,0 +1,665 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ229",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ229",
+                "@type": "wx:Zone",
+                "id": "TXZ229",
+                "type": "public",
+                "name": "La Salle",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCOT",
+                    "https://api.weather.gov/stations/KLRD"
+                ],
+                "radarStation": "DFX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ230",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ230",
+                "@type": "wx:Zone",
+                "id": "TXZ230",
+                "type": "public",
+                "name": "McMullen",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCOT",
+                    "https://api.weather.gov/stations/KALI",
+                    "https://api.weather.gov/stations/KLRD"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ231",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ231",
+                "@type": "wx:Zone",
+                "id": "TXZ231",
+                "type": "public",
+                "name": "Live Oak",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KALI",
+                    "https://api.weather.gov/stations/KCOT",
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KVCT"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ232",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ232",
+                "@type": "wx:Zone",
+                "id": "TXZ232",
+                "type": "public",
+                "name": "Bee",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KVCT",
+                    "https://api.weather.gov/stations/KALI",
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KRKP"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ233",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ233",
+                "@type": "wx:Zone",
+                "id": "TXZ233",
+                "type": "public",
+                "name": "Goliad",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KVCT",
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KRKP"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ239",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ239",
+                "@type": "wx:Zone",
+                "id": "TXZ239",
+                "type": "public",
+                "name": "Webb",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KLRD",
+                    "https://api.weather.gov/stations/KCOT"
+                ],
+                "radarStation": "DFX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ240",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ240",
+                "@type": "wx:Zone",
+                "id": "TXZ240",
+                "type": "public",
+                "name": "Duval",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KALI",
+                    "https://api.weather.gov/stations/KCOT",
+                    "https://api.weather.gov/stations/KLRD",
+                    "https://api.weather.gov/stations/KNQI"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ241",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ241",
+                "@type": "wx:Zone",
+                "id": "TXZ241",
+                "type": "public",
+                "name": "Jim Wells",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KALI",
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KNGP",
+                    "https://api.weather.gov/stations/KNQI"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ242",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ242",
+                "@type": "wx:Zone",
+                "id": "TXZ242",
+                "type": "public",
+                "name": "Inland Kleberg",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KNQI",
+                    "https://api.weather.gov/stations/KALI",
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KNGP"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ243",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ243",
+                "@type": "wx:Zone",
+                "id": "TXZ243",
+                "type": "public",
+                "name": "Inland Nueces",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KALI",
+                    "https://api.weather.gov/stations/KNGP",
+                    "https://api.weather.gov/stations/KNQI",
+                    "https://api.weather.gov/stations/KRKP"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ244",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ244",
+                "@type": "wx:Zone",
+                "id": "TXZ244",
+                "type": "public",
+                "name": "Inland San Patricio",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KALI",
+                    "https://api.weather.gov/stations/KNGP",
+                    "https://api.weather.gov/stations/KRKP"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ245",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ245",
+                "@type": "wx:Zone",
+                "id": "TXZ245",
+                "type": "public",
+                "name": "Coastal Aransas",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRKP",
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KNGP",
+                    "https://api.weather.gov/stations/KPSX",
+                    "https://api.weather.gov/stations/KVCT"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ246",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ246",
+                "@type": "wx:Zone",
+                "id": "TXZ246",
+                "type": "public",
+                "name": "Inland Refugio",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRKP",
+                    "https://api.weather.gov/stations/KCRP",
+                    "https://api.weather.gov/stations/KNGP",
+                    "https://api.weather.gov/stations/KPSX",
+                    "https://api.weather.gov/stations/KVCT"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ342",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ342",
+                "@type": "wx:Zone",
+                "id": "TXZ342",
+                "type": "public",
+                "name": "Coastal Kleberg",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KNQI",
+                    "https://api.weather.gov/stations/KIKG"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ343",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ343",
+                "@type": "wx:Zone",
+                "id": "TXZ343",
+                "type": "public",
+                "name": "Coastal Nueces",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KNGP",
+                    "https://api.weather.gov/stations/KCRP"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ344",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ344",
+                "@type": "wx:Zone",
+                "id": "TXZ344",
+                "type": "public",
+                "name": "Coastal San Patricio",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KTFP",
+                    "https://api.weather.gov/stations/KRAS"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ345",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ345",
+                "@type": "wx:Zone",
+                "id": "TXZ345",
+                "type": "public",
+                "name": "Aransas Islands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRAS",
+                    "https://api.weather.gov/stations/KRKP"
+                ],
+                "radarStation": "CRP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ346",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ346",
+                "@type": "wx:Zone",
+                "id": "TXZ346",
+                "type": "public",
+                "name": "Coastal Refugio",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ442",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ442",
+                "@type": "wx:Zone",
+                "id": "TXZ442",
+                "type": "public",
+                "name": "Kleberg Islands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/TXZ443",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/TXZ443",
+                "@type": "wx:Zone",
+                "id": "TXZ443",
+                "type": "public",
+                "name": "Nueces Islands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "TX",
+                "forecastOffice": "https://api.weather.gov/offices/CRP",
+                "gridIdentifier": "CRP",
+                "awipsLocationIdentifier": "CRP",
+                "cwa": [
+                    "CRP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/CRP"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KNGP",
+                    "https://api.weather.gov/stations/KRAS"
+                ],
+                "radarStation": "CRP"
+            }
+        }
+    ]
+}

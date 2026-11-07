@@ -1,0 +1,29 @@
+en Español
+
+718 
+ABPZ20 KNHC 260513
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 PM PDT Sun Oct 25 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Vance, located a few hundred miles west-southwest of Acapulco, 
+Mexico, and on Tropical Storm Olana, located several hundred miles 
+west-southwest of Johnston Atoll.
+
+Tropical cyclone formation is not expected over the next 7 days.
+
+&&
+Public Advisories on Tropical Storm Olana are issued under 
+WMO header WTPA33 KNHC and under AWIPS header HFOTCPCP3. 
+Forecast/Advisories on Tropical Storm Olana are issued under 
+WMO header WTPA23 KNHC and under AWIPS header HFOTCMCP3.
+
+$$
+Forecaster Kelly
+  

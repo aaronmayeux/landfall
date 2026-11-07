@@ -1,0 +1,465 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5a489f8dcb824745242b5cc5259d11b59eb27e23.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -105.71,
+                            33.42
+                        ],
+                        [
+                            -105.66,
+                            33.42
+                        ],
+                        [
+                            -105.65,
+                            33.43
+                        ],
+                        [
+                            -105.63,
+                            33.44
+                        ],
+                        [
+                            -105.61,
+                            33.4
+                        ],
+                        [
+                            -105.62,
+                            33.38
+                        ],
+                        [
+                            -105.64,
+                            33.39
+                        ],
+                        [
+                            -105.64,
+                            33.34
+                        ],
+                        [
+                            -105.63,
+                            33.33
+                        ],
+                        [
+                            -105.56,
+                            33.36
+                        ],
+                        [
+                            -105.53,
+                            33.38
+                        ],
+                        [
+                            -105.43,
+                            33.43
+                        ],
+                        [
+                            -105.43,
+                            33.41
+                        ],
+                        [
+                            -105.55,
+                            33.33
+                        ],
+                        [
+                            -105.59,
+                            33.31
+                        ],
+                        [
+                            -105.73,
+                            33.31
+                        ],
+                        [
+                            -105.73,
+                            33.39
+                        ],
+                        [
+                            -105.78,
+                            33.39
+                        ],
+                        [
+                            -105.78,
+                            33.41
+                        ],
+                        [
+                            -105.71,
+                            33.42
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5a489f8dcb824745242b5cc5259d11b59eb27e23.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5a489f8dcb824745242b5cc5259d11b59eb27e23.001.1",
+                "areaDesc": "Lincoln, NM",
+                "geocode": {
+                    "SAME": [
+                        "035027"
+                    ],
+                    "UGC": [
+                        "NMC027"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC027"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e6e8f35546b1bcf3ea5ca9fb6c6d9c0ebfe11d2a.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.e6e8f35546b1bcf3ea5ca9fb6c6d9c0ebfe11d2a.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-29T13:36:00-06:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.694df5b9e8052844910224e325a5f7a7c95e9c3e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.694df5b9e8052844910224e325a5f7a7c95e9c3e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-29T13:46:00-06:00"
+                    }
+                ],
+                "sent": "2026-10-29T13:56:00-06:00",
+                "effective": "2026-10-29T13:56:00-06:00",
+                "onset": "2026-10-29T13:56:00-06:00",
+                "expires": "2026-10-29T16:30:00-06:00",
+                "ends": "2026-10-29T16:30:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flash Flood Warning issued October 29 at 1:56PM MDT until October 29 at 4:30PM MDT by NWS Albuquerque NM",
+                "description": "At 156 PM MDT, Doppler radar indicated thunderstorms producing heavy\nrain over the South Fork and Salt Burn Scars. Up to 1.5 inches of\nrain have fallen. The expected rainfall rate is 1 to 2 inches in 1\nhour. Additional rainfall amounts up to 1.5 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nExcessive rainfall over the burn scar will impact Upper Canyon, Brady\nCanyon, and Perk Canyon as well as the Cedar Creek, Eagle Creek, Bear\nCanyon, and Rio Ruidoso drainages. Impacts will include but are not\nlimited to all nearby reservoirs, bridges, culverts and roadways,\nincluding Highway 70. Impacts to areas along the Rio Ruidoso may\nextend downstream of Ruidoso Downs. The debris flow can consist of\nrock, mud, vegetation and other loose materials.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding in and around the South Fork Burn Scar.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of areas in and around the\nSouth Fork Burn Scar.\n\nSome locations that will experience flash flooding include...\nRuidoso, Ruidoso Downs, Alto, Glencoe and Hollywood.",
+                "instruction": "This is a life threatening situation. Heavy rainfall will cause\nextensive and severe flash flooding of creeks, streams and ditches in\nthe South Fork Burn Scar. Severe debris flows can also be anticipated\nacross roads. Roads and driveways may be washed away in places. If\nyou encounter flood waters, climb to safety.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KABQ 291956"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING FOR THE SOUTH FORK AND SALT BURN SCARS REMAINS IN EFFECT UNTIL 430 PM MDT THIS AFTERNOON FOR SOUTH CENTRAL LINCOLN COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FF.W.0239.000000T0000Z-261029T2230Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-29T16:30:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.663e94cf2033cc937272cfa77f49b8c8e566ab4f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -105.6,
+                            33.31
+                        ],
+                        [
+                            -105.63,
+                            33.24
+                        ],
+                        [
+                            -105.7,
+                            33.26
+                        ],
+                        [
+                            -105.69,
+                            33.3
+                        ],
+                        [
+                            -105.6,
+                            33.31
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.663e94cf2033cc937272cfa77f49b8c8e566ab4f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.663e94cf2033cc937272cfa77f49b8c8e566ab4f.001.1",
+                "areaDesc": "Otero, NM",
+                "geocode": {
+                    "SAME": [
+                        "035035"
+                    ],
+                    "UGC": [
+                        "NMC035"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC035"
+                ],
+                "references": [],
+                "sent": "2026-10-29T13:43:00-06:00",
+                "effective": "2026-10-29T13:43:00-06:00",
+                "onset": "2026-10-29T13:43:00-06:00",
+                "expires": "2026-10-29T14:30:00-06:00",
+                "ends": "2026-10-29T14:30:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued October 29 at 1:43PM MDT until October 29 at 2:30PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nThe Salt Burn Scar in...\nNorthern Otero County in south central New Mexico...\n\n* Until 230 PM MDT.\n\n* At 143 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain over the Salt Burn Scar. Between 1 and 1.5 inches of\nrain have fallen. Additional rainfall amounts up to 1 inch are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly. Excessive rainfall over the burn scar will result\nin debris flow. The debris flow can consist of rock, mud,\nvegetation and other loose materials.\n\nHAZARD...Flash flooding caused by thunderstorms in and around the\nSalt Burn Scar.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flooding of areas in and around the Salt Burn Scar.\n\n* Some locations that will experience flash flooding include...\nLake Mescalero, Snow Canyon, Bear Canyon, Fence Canyon and Portions\nof US Highway 70 between Apache Summit and the Otero-Lincoln County\nLine.",
+                "instruction": "This is a life threatening situation. Heavy rainfall will cause\nextensive and severe flash flooding of creeks...streams...and ditches\nin the Salt Burn Scar. Severe debris flows can also be anticipated\nacross roads. Roads and driveways may be washed away in places. If\nyou encounter flood waters...climb to safety.\n\nTurn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291943"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0244.261029T1943Z-261029T2030Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-29T14:30:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.79bb37e9871028ad1701b82f08743ce4f485a1c4.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -156.28,
+                            20.79
+                        ],
+                        [
+                            -156.47,
+                            20.91
+                        ],
+                        [
+                            -156.3,
+                            20.97
+                        ],
+                        [
+                            -156.24,
+                            20.96
+                        ],
+                        [
+                            -156.14,
+                            20.88
+                        ],
+                        [
+                            -156.13,
+                            20.89
+                        ],
+                        [
+                            -156.11,
+                            20.88
+                        ],
+                        [
+                            -156.1,
+                            20.86
+                        ],
+                        [
+                            -156.1,
+                            20.85
+                        ],
+                        [
+                            -155.99,
+                            20.81
+                        ],
+                        [
+                            -155.96,
+                            20.77
+                        ],
+                        [
+                            -155.96,
+                            20.7
+                        ],
+                        [
+                            -156.04,
+                            20.62
+                        ],
+                        [
+                            -156.14,
+                            20.59
+                        ],
+                        [
+                            -156.2,
+                            20.6
+                        ],
+                        [
+                            -156.28,
+                            20.56
+                        ],
+                        [
+                            -156.32,
+                            20.56
+                        ],
+                        [
+                            -156.22,
+                            20.74
+                        ],
+                        [
+                            -156.28,
+                            20.79
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.79bb37e9871028ad1701b82f08743ce4f485a1c4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.79bb37e9871028ad1701b82f08743ce4f485a1c4.001.1",
+                "areaDesc": "Maui, HI",
+                "geocode": {
+                    "SAME": [
+                        "015009"
+                    ],
+                    "UGC": [
+                        "HIC009"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/HIC009"
+                ],
+                "references": [],
+                "sent": "2026-10-29T08:55:00-10:00",
+                "effective": "2026-10-29T08:55:00-10:00",
+                "onset": "2026-10-29T08:55:00-10:00",
+                "expires": "2026-10-29T11:45:00-10:00",
+                "ends": "2026-10-29T11:45:00-10:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flash Flood Warning issued October 29 at 8:55AM HST until October 29 at 11:45AM HST by NWS Honolulu HI",
+                "description": "FFWHFO\n\nThe National Weather Service in Honolulu has issued a\n\n* Flash Flood Warning for...\nThe island of Maui in Maui County\n\n* Until 1145 AM HST.\n\n* At 855 AM HST, Doppler radar indicated heavy rain over windward and\nsoutheast Maui. Rain was falling at a rate of 1 to 2 inches per\nhour and has been nearly stationary along the eastern flank of\nHaleakala. Stream such as Oheo Gulch has been steadily rising and\nflash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nKeanae, Nahiku, Kipahulu, Kaupo, Huelo, Makawao, Hana, Pukalani,\nHaiku-Pauwela and Haliimaile.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW50 PHFO 291855"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.PHFO.FF.W.0056.261029T1855Z-261029T2145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-29T11:45:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-29T20:05:10+00:00"
+}

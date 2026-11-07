@@ -1,0 +1,294 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2d64bacc1dfbc0fe9608537da9013a58beb7ca52.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -103.27,
+                            38.03
+                        ],
+                        [
+                            -103.23,
+                            38.07
+                        ],
+                        [
+                            -103.19,
+                            38.1
+                        ],
+                        [
+                            -103.13,
+                            38.05
+                        ],
+                        [
+                            -103.17,
+                            38.01
+                        ],
+                        [
+                            -103.21,
+                            37.98
+                        ],
+                        [
+                            -103.27,
+                            38.03
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2d64bacc1dfbc0fe9608537da9013a58beb7ca52.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2d64bacc1dfbc0fe9608537da9013a58beb7ca52.001.1",
+                "areaDesc": "Las Animas Vicinity/Bent County",
+                "geocode": {
+                    "SAME": [
+                        "008011"
+                    ],
+                    "UGC": [
+                        "COZ097"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/COZ097"
+                ],
+                "references": [],
+                "sent": "2026-10-26T11:53:00-06:00",
+                "effective": "2026-10-26T11:53:00-06:00",
+                "onset": "2026-10-26T22:41:00-06:00",
+                "expires": "2026-10-26T20:00:00-06:00",
+                "ends": "2026-10-28T17:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pueblo CO",
+                "headline": "Flood Watch issued October 26 at 11:53AM MDT until October 28 at 5:00PM MDT by NWS Pueblo CO",
+                "description": "...The National Weather Service in Pueblo has issued a Flood Watch\nfor the following rivers in Colorado...\n\nPurgatoire River Near Las Animas affecting Las Animas Vicinity/Bent\nCounty zone.\n\nFor the Purgatoire River...including Las Animas...flooding is\npossible.\n\n* WHAT...High flow is traveling down the Upper Purgatoire from recent\nrains, and may lead to flooding near Las Animas.\n\n* WHERE...Purgatoire River near Las Animas.\n\n* WHEN...From this evening to Wednesday afternoon.\n\n* ADDITIONAL DETAILS...\n- At 11:15 AM MDT Monday the stage was 2.5 feet.\n- Forecast...Flood stage may be reached late this evening.\n- Flood stage is 9.0 feet.\n- http://www.weather.gov/safety/flood",
+                "instruction": "If you are in the watch area, remain alert to possible flooding.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.\n\nStay tuned to further developments by listening to your local radio,\ntelevision, or NOAA Weather Radio for further information.\n\nAdditional information is available at www.weather.gov.\n\nThe next statement will be issued this evening at 800 PM MDT.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPUB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KPUB 261753"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM THIS EVENING TO WEDNESDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPUB.FL.A.0001.261027T0441Z-261028T2300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-28T17:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FLA"
+                    ],
+                    "NationalWeatherService": [
+                        "FLA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d9649a8091ad45a981f3c613e45233a71e892664.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d9649a8091ad45a981f3c613e45233a71e892664.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d9649a8091ad45a981f3c613e45233a71e892664.001.1",
+                "areaDesc": "Niihau; Kauai Southwest; Kauai Mountains; Waianae Coast; Oahu North Shore; Olomana; Central Oahu; Waianae Mountains; Lanai Mauka; Kahoolawe; Maui Windward West; Maui Leeward West; Haleakala Summit; Kona; Kohala; Big Island Interior; Big Island Summit; Kauai North; Kauai East; Kauai South; East Honolulu; Honolulu Metro; Ewa Plain; Koolau Windward; Koolau Leeward; Molokai Windward; Molokai Southeast; Molokai North; Molokai West; Molokai Leeward South; Lanai Windward; Lanai Leeward; Lanai South; Maui Central Valley North; Maui Central Valley South; Windward Haleakala; Kipahulu; South Maui/Upcountry; South Haleakala; Big Island South; Big Island Southeast; Big Island East; Big Island North",
+                "geocode": {
+                    "SAME": [
+                        "015007",
+                        "015003",
+                        "015009",
+                        "015001"
+                    ],
+                    "UGC": [
+                        "HIZ001",
+                        "HIZ003",
+                        "HIZ004",
+                        "HIZ006",
+                        "HIZ007",
+                        "HIZ009",
+                        "HIZ010",
+                        "HIZ011",
+                        "HIZ015",
+                        "HIZ016",
+                        "HIZ017",
+                        "HIZ018",
+                        "HIZ022",
+                        "HIZ023",
+                        "HIZ026",
+                        "HIZ027",
+                        "HIZ028",
+                        "HIZ029",
+                        "HIZ030",
+                        "HIZ031",
+                        "HIZ032",
+                        "HIZ033",
+                        "HIZ034",
+                        "HIZ035",
+                        "HIZ036",
+                        "HIZ037",
+                        "HIZ038",
+                        "HIZ039",
+                        "HIZ040",
+                        "HIZ041",
+                        "HIZ042",
+                        "HIZ043",
+                        "HIZ044",
+                        "HIZ045",
+                        "HIZ046",
+                        "HIZ047",
+                        "HIZ048",
+                        "HIZ049",
+                        "HIZ050",
+                        "HIZ051",
+                        "HIZ052",
+                        "HIZ053",
+                        "HIZ054"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/HIZ001",
+                    "https://api.weather.gov/zones/forecast/HIZ003",
+                    "https://api.weather.gov/zones/forecast/HIZ004",
+                    "https://api.weather.gov/zones/forecast/HIZ006",
+                    "https://api.weather.gov/zones/forecast/HIZ007",
+                    "https://api.weather.gov/zones/forecast/HIZ009",
+                    "https://api.weather.gov/zones/forecast/HIZ010",
+                    "https://api.weather.gov/zones/forecast/HIZ011",
+                    "https://api.weather.gov/zones/forecast/HIZ015",
+                    "https://api.weather.gov/zones/forecast/HIZ016",
+                    "https://api.weather.gov/zones/forecast/HIZ017",
+                    "https://api.weather.gov/zones/forecast/HIZ018",
+                    "https://api.weather.gov/zones/forecast/HIZ022",
+                    "https://api.weather.gov/zones/forecast/HIZ023",
+                    "https://api.weather.gov/zones/forecast/HIZ026",
+                    "https://api.weather.gov/zones/forecast/HIZ027",
+                    "https://api.weather.gov/zones/forecast/HIZ028",
+                    "https://api.weather.gov/zones/forecast/HIZ029",
+                    "https://api.weather.gov/zones/forecast/HIZ030",
+                    "https://api.weather.gov/zones/forecast/HIZ031",
+                    "https://api.weather.gov/zones/forecast/HIZ032",
+                    "https://api.weather.gov/zones/forecast/HIZ033",
+                    "https://api.weather.gov/zones/forecast/HIZ034",
+                    "https://api.weather.gov/zones/forecast/HIZ035",
+                    "https://api.weather.gov/zones/forecast/HIZ036",
+                    "https://api.weather.gov/zones/forecast/HIZ037",
+                    "https://api.weather.gov/zones/forecast/HIZ038",
+                    "https://api.weather.gov/zones/forecast/HIZ039",
+                    "https://api.weather.gov/zones/forecast/HIZ040",
+                    "https://api.weather.gov/zones/forecast/HIZ041",
+                    "https://api.weather.gov/zones/forecast/HIZ042",
+                    "https://api.weather.gov/zones/forecast/HIZ043",
+                    "https://api.weather.gov/zones/forecast/HIZ044",
+                    "https://api.weather.gov/zones/forecast/HIZ045",
+                    "https://api.weather.gov/zones/forecast/HIZ046",
+                    "https://api.weather.gov/zones/forecast/HIZ047",
+                    "https://api.weather.gov/zones/forecast/HIZ048",
+                    "https://api.weather.gov/zones/forecast/HIZ049",
+                    "https://api.weather.gov/zones/forecast/HIZ050",
+                    "https://api.weather.gov/zones/forecast/HIZ051",
+                    "https://api.weather.gov/zones/forecast/HIZ052",
+                    "https://api.weather.gov/zones/forecast/HIZ053",
+                    "https://api.weather.gov/zones/forecast/HIZ054"
+                ],
+                "references": [],
+                "sent": "2026-10-26T03:05:00-10:00",
+                "effective": "2026-10-26T03:05:00-10:00",
+                "onset": "2026-10-27T06:00:00-10:00",
+                "expires": "2026-10-26T23:30:00-10:00",
+                "ends": "2026-10-29T05:00:00-10:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flood Watch issued October 26 at 3:05AM HST until October 29 at 5:00AM HST by NWS Honolulu HI",
+                "description": "A trough moving over the state should bring abundant tropical\nmoisture and is expected to remain nearly stationary for a few days.\nHeavy rain and isolated thunderstorms are possible, potentially\nleading to flooding across all islands.\n\n* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...All main Hawaiian Islands.\n\n* WHEN...From Tuesday morning through late Wednesday night.\n\n* IMPACTS...Flood prone roads and other low lying areas may be closed\ndue to elevated runoff and overflowing streams. Urban areas may\nreceive more significant flooding and property damage due to rapid\nrunoff.\n\n* ADDITIONAL DETAILS...\n- Heavy showers and isolated thunderstorms with intense rain rates\nmay develop Tuesday and continue through Wednesday evening as a\ntrough moves over the state.",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW60 PHFO 261305"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM TUESDAY MORNING THROUGH LATE WEDNESDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.PHFO.FA.A.0015.261027T1600Z-261029T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-29T05:00:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-26T23:38:38+00:00"
+}
