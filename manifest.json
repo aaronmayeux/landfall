@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-11-12T03:55:05.449Z",
+  "runAt": "2026-11-12T12:56:25.318Z",
   "sources": {
     "btk": {
       "status": "ok",
@@ -26,7 +26,7 @@
         "btk/2026/bcp012026.dat": "unchanged (304)",
         "btk/2026/bcp022026.dat": "unchanged (304)",
         "btk/2026/bcp032026.dat": "unchanged (304)",
-        "btk/2026/bcp042026.dat": "stored 8711 bytes",
+        "btk/2026/bcp042026.dat": "stored 9143 bytes",
         "btk/2026/bep012026.dat": "unchanged (304)",
         "btk/2026/bep022026.dat": "unchanged (304)",
         "btk/2026/bep032026.dat": "unchanged (304)",
