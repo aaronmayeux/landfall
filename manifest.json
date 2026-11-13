@@ -1,12 +1,12 @@
 {
-  "runAt": "2026-11-12T20:56:19.336Z",
+  "runAt": "2026-11-13T09:43:55.874Z",
   "sources": {
     "btk": {
       "status": "ok",
       "listed": 37,
       "eligible": 36,
-      "stored": 1,
-      "unchanged": 35,
+      "stored": 0,
+      "unchanged": 36,
       "failed": 0,
       "skipped": [
         "bep962026.dat — invest — number is reused within a season"
@@ -25,7 +25,7 @@
         "btk/2026/bcp012026.dat": "unchanged (304)",
         "btk/2026/bcp022026.dat": "unchanged (304)",
         "btk/2026/bcp032026.dat": "unchanged (304)",
-        "btk/2026/bcp042026.dat": "stored 9143 bytes",
+        "btk/2026/bcp042026.dat": "unchanged (304)",
         "btk/2026/bep012026.dat": "unchanged (304)",
         "btk/2026/bep022026.dat": "unchanged (304)",
         "btk/2026/bep032026.dat": "unchanged (304)",
@@ -51,13 +51,12 @@
       }
     },
     "jtwc": {
-      "status": "ok",
-      "storms": 1,
-      "linesAdded": 1,
-      "files": {
-        "jtwc/2026/cp0426.jsonl": "+1"
-      },
-      "faults": []
+      "status": "unavailable",
+      "storms": 0,
+      "linesAdded": 0,
+      "files": {},
+      "faults": [],
+      "reason": "relay reported state \"clear\""
     }
   }
 }
