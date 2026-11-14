@@ -1,0 +1,136 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b2814629d16aa65400eab057798e7caa6c3252aa.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -103.87,
+                            31.68
+                        ],
+                        [
+                            -104.15,
+                            31.72
+                        ],
+                        [
+                            -104.15,
+                            32
+                        ],
+                        [
+                            -103.75,
+                            31.99
+                        ],
+                        [
+                            -103.87,
+                            31.68
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b2814629d16aa65400eab057798e7caa6c3252aa.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b2814629d16aa65400eab057798e7caa6c3252aa.001.1",
+                "areaDesc": "Culberson, TX; Loving, TX; Reeves, TX",
+                "geocode": {
+                    "SAME": [
+                        "048109",
+                        "048301",
+                        "048389"
+                    ],
+                    "UGC": [
+                        "TXC109",
+                        "TXC301",
+                        "TXC389"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC109",
+                    "https://api.weather.gov/zones/county/TXC301",
+                    "https://api.weather.gov/zones/county/TXC389"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c6a55f3ff54f5e696b2a6911e14526a0b20ac18a.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.c6a55f3ff54f5e696b2a6911e14526a0b20ac18a.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-28T23:21:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-29T01:02:00-05:00",
+                "effective": "2026-10-29T01:02:00-05:00",
+                "onset": "2026-10-29T01:02:00-05:00",
+                "expires": "2026-10-29T02:15:00-05:00",
+                "ends": "2026-10-29T02:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Midland/Odessa TX",
+                "headline": "Flash Flood Warning issued October 29 at 1:02AM CDT until October 29 at 2:15AM CDT by NWS Midland/Odessa TX",
+                "description": "At 102 AM CDT /1202 AM MDT/, Doppler radar indicated heavy rain had\nfallen across the warned area. Between 1 and 1.5 inches of rain have\nfallen. Flooding impacts will continue, but little to no additional\nrainfall is expected. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nOrla, Red Bluff Reservoir and Red Bluff.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSMAF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KMAF 290602"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 215 AM CDT /115 AM MDT/ EARLY THIS MORNING FOR NORTHEASTERN CULBERSON, NORTHWESTERN REEVES AND NORTHWESTERN LOVING COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KMAF.FF.W.0252.000000T0000Z-261029T0715Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-29T02:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-29T06:55:10+00:00"
+}

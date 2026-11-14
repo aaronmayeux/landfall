@@ -1,0 +1,543 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3f693ff141ad2b125582963d2ce4da3a2c139761.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.67,
+                            27.46
+                        ],
+                        [
+                            -80.68,
+                            27.63
+                        ],
+                        [
+                            -80.52,
+                            27.73
+                        ],
+                        [
+                            -80.33,
+                            27.65
+                        ],
+                        [
+                            -80.31,
+                            27.58
+                        ],
+                        [
+                            -80.3,
+                            27.58
+                        ],
+                        [
+                            -80.29,
+                            27.57
+                        ],
+                        [
+                            -80.27,
+                            27.5
+                        ],
+                        [
+                            -80.26,
+                            27.49
+                        ],
+                        [
+                            -80.26,
+                            27.48
+                        ],
+                        [
+                            -80.2,
+                            27.32
+                        ],
+                        [
+                            -80.67,
+                            27.46
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3f693ff141ad2b125582963d2ce4da3a2c139761.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3f693ff141ad2b125582963d2ce4da3a2c139761.001.1",
+                "areaDesc": "Indian River, FL; St. Lucie, FL",
+                "geocode": {
+                    "SAME": [
+                        "012061",
+                        "012111"
+                    ],
+                    "UGC": [
+                        "FLC061",
+                        "FLC111"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC061",
+                    "https://api.weather.gov/zones/county/FLC111"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.def35b034a72a5b75d2106e2c2a941cfb50ec0de.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.def35b034a72a5b75d2106e2c2a941cfb50ec0de.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-02T16:02:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-02T17:46:00-05:00",
+                "effective": "2026-11-02T17:46:00-05:00",
+                "onset": "2026-11-02T17:46:00-05:00",
+                "expires": "2026-11-02T20:00:00-05:00",
+                "ends": "2026-11-02T20:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flash Flood Warning issued November 2 at 5:46PM EST until November 2 at 8:00PM EST by NWS Melbourne FL",
+                "description": "FFWMLB\n\nThe National Weather Service in Melbourne has extended the\n\n* Flash Flood Warning for...\nSoutheastern Indian River County in east central Florida...\nNorthern St. Lucie County in east central Florida...\n\n* Until 800 PM EST.\n\n* At 546 PM EST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 5 and 11 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFort Pierce, Vero Beach, Vero Beach South, Indrio, Gifford, Fort\nPierce Inlet, White City, Saint Lucie Nuclear Power Plant, Lakewood\nPark, Vero Beach Highland, Saint Lucie Airport, Pointe West, Fort\nPierce North, Saint Lucie Village, South Beach, Queens Cove, Fort\nPierce South and Indian River Estates.",
+                "instruction": "Turn around, don't drown. Be aware of your surroundings and do not\ndrive on flooded roads. Most flood deaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMLB 022246"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KMLB.FF.W.0022.000000T0000Z-261103T0100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T20:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5e486ff04db9ff7655e951f99fce7d71b647b15e.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.05,
+                            26.4
+                        ],
+                        [
+                            -80.19,
+                            26.41
+                        ],
+                        [
+                            -80.17,
+                            26.78
+                        ],
+                        [
+                            -80,
+                            26.79
+                        ],
+                        [
+                            -80.05,
+                            26.4
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5e486ff04db9ff7655e951f99fce7d71b647b15e.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5e486ff04db9ff7655e951f99fce7d71b647b15e.001.1",
+                "areaDesc": "Palm Beach, FL",
+                "geocode": {
+                    "SAME": [
+                        "012099"
+                    ],
+                    "UGC": [
+                        "FLC099"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC099"
+                ],
+                "references": [],
+                "sent": "2026-11-02T17:27:00-05:00",
+                "effective": "2026-11-02T17:27:00-05:00",
+                "onset": "2026-11-02T17:27:00-05:00",
+                "expires": "2026-11-02T19:30:00-05:00",
+                "ends": "2026-11-02T19:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flash Flood Warning issued November 2 at 5:27PM EST until November 2 at 7:30PM EST by NWS Miami FL",
+                "description": "FFWMFL\n\nThe National Weather Service in Miami has issued a\n\n* Flash Flood Warning for...\nEastern Palm Beach County in southeastern Florida...\n\n* Until 730 PM EST.\n\n* At 527 PM EST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. The expected rainfall rate is 1 to 1.5 inches in 1\nhour. Additional rainfall amounts of 1 to 3 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWest Palm Beach, Boca Raton, Boynton Beach, Delray Beach, Lake\nWorth, Riviera Beach, Palm Beach, Highland Beach, Ocean Ridge,\nGreenacres, Palm Springs, Lantana, Atlantis, Haverhill, Cloud Lake,\nGun Club Estates, President Donald J. Trump International Airport,\nRoyal Palm Estates and Lake Belvedere Estates.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMFL 022227"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMFL.FF.W.0010.261102T2227Z-261103T0030Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T19:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d74cc6ae663b4233c5bf2a05727a93f595b43499.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.44,
+                            27.21
+                        ],
+                        [
+                            -80.52,
+                            27.42
+                        ],
+                        [
+                            -80.2,
+                            27.33
+                        ],
+                        [
+                            -80.19,
+                            27.32
+                        ],
+                        [
+                            -80.17,
+                            27.27
+                        ],
+                        [
+                            -80.29,
+                            27.21
+                        ],
+                        [
+                            -80.44,
+                            27.21
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d74cc6ae663b4233c5bf2a05727a93f595b43499.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d74cc6ae663b4233c5bf2a05727a93f595b43499.001.1",
+                "areaDesc": "Martin, FL; St. Lucie, FL",
+                "geocode": {
+                    "SAME": [
+                        "012085",
+                        "012111"
+                    ],
+                    "UGC": [
+                        "FLC085",
+                        "FLC111"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC085",
+                    "https://api.weather.gov/zones/county/FLC111"
+                ],
+                "references": [],
+                "sent": "2026-11-02T17:01:00-05:00",
+                "effective": "2026-11-02T17:01:00-05:00",
+                "onset": "2026-11-02T17:01:00-05:00",
+                "expires": "2026-11-02T18:30:00-05:00",
+                "ends": "2026-11-02T18:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flash Flood Warning issued November 2 at 5:01PM EST until November 2 at 6:30PM EST by NWS Melbourne FL",
+                "description": "FFWMLB\n\nThe National Weather Service in Melbourne has issued a\n\n* Flash Flood Warning for...\nNorthern Martin County in east central Florida...\nSoutheastern St. Lucie County in east central Florida...\n\n* Until 630 PM EST.\n\n* At 501 PM EST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 4 and 8 inches of rain\nhave fallen. Additional rainfall amounts of 2 to 4 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPort Saint Lucie, Walton, White City, Jensen Beach, Port Saint\nLucie River Park, Saint Lucie West, Indian River Estates,\nTradition, North River Shores, Nettles Island, Ocean Breeze Park,\nTradition Field, Carlton, Hutchinson Island South and Waveland.",
+                "instruction": "Turn around, don't drown. Be aware of your surroundings and do not\ndrive on flooded roads. Most flood deaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMLB 022201"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMLB.FF.W.0023.261102T2201Z-261102T2330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T18:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.11ee3a0377557421745bfb9bb3df1c5883f607b2.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -110.62,
+                            35
+                        ],
+                        [
+                            -110.65,
+                            34.98
+                        ],
+                        [
+                            -110.71,
+                            35.06
+                        ],
+                        [
+                            -110.74,
+                            35.12
+                        ],
+                        [
+                            -111.05,
+                            35.34
+                        ],
+                        [
+                            -111.02,
+                            35.36
+                        ],
+                        [
+                            -110.97,
+                            35.31
+                        ],
+                        [
+                            -110.85,
+                            35.3
+                        ],
+                        [
+                            -110.64,
+                            35.19
+                        ],
+                        [
+                            -110.61,
+                            35.11
+                        ],
+                        [
+                            -110.64,
+                            35.05
+                        ],
+                        [
+                            -110.63,
+                            35.03
+                        ],
+                        [
+                            -110.62,
+                            35
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.11ee3a0377557421745bfb9bb3df1c5883f607b2.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.11ee3a0377557421745bfb9bb3df1c5883f607b2.001.1",
+                "areaDesc": "Coconino, AZ; Navajo, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004005",
+                        "004017"
+                    ],
+                    "UGC": [
+                        "AZC005",
+                        "AZC017"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC005",
+                    "https://api.weather.gov/zones/county/AZC017"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2631ba0442a4dc828405681f375c818d66157c0c.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.2631ba0442a4dc828405681f375c818d66157c0c.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-02T07:43:00-07:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f1a3ef1cbca6dd1178e18232b311a1b636e37be8.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.f1a3ef1cbca6dd1178e18232b311a1b636e37be8.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-02T10:51:00-07:00"
+                    }
+                ],
+                "sent": "2026-11-02T13:23:00-07:00",
+                "effective": "2026-11-02T13:23:00-07:00",
+                "onset": "2026-11-02T13:23:00-07:00",
+                "expires": "2026-11-02T20:00:00-07:00",
+                "ends": "2026-11-02T20:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flash Flood Warning issued November 2 at 1:23PM MST until November 2 at 8:00PM MST by NWS Flagstaff AZ",
+                "description": "FFWFGZ\n\nThe National Weather Service in Flagstaff has extended the\n\n* Flash Flood Warning for...\nCoconino County in north central Arizona...\nNavajo County in north central Arizona...\n\n* Until 800 PM MST Monday.\n\n* At 123 PM MST, the river gauge on the Little Colorado River at\nWinslow has risen above Major flood stage. Additional rises are\nforecast through late tonight, with flooding impacts to Ames Acres\nand Bushman Acres in Winslow. Flash flooding is already occurring.\n\nHAZARD...Life threatening flash flooding.\n\nSOURCE...River gauge reported.\n\nIMPACT...Life threatening flash flooding of the Little Colorado\nRiver.\n\n* For Little Colorado at Winslow:\nAt 1:00pm MST the stage was 25.1 feet.\nFlood Stage is 19.0 feet.\nForecast: A crest of 40.15 feet is expected at 3:00am MST Tuesday.\nImpacts:\nAt 25.0 feet: Levee is overtopped. Major flooding of portions of\nWinslow including Ames Acres and Bushman Acres.\n\nSome locations that will experience flash flooding include...\nWinslow, Leupp, Birdsprings, Sunrise, Bushman Acres and Homolovi\nRuins State Park.\n\nThis includes the following highways...\nInterstate 40 between mile markers 254 and 258. Business Interstate\n40 between mile markers 256 and 257. State Route 87 between mile\nmarkers 346 and 347.\n\nThis includes the following recreation areas and campgrounds...\nHomolovi State Park Campground.\n\nThis includes the following creeks, washes and rivers...\nLittle Colorado River.",
+                "instruction": "Be aware of your surroundings and do not drive on flooded roads.\n\nStay away or be swept away! The banks of creeks and washes are\nunstable and unsafe during any flooding event.\n\nLow water crossings will become dangerous in heavy rain. Do not\nattempt to cross flooded roads. Find an alternate route.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KFGZ 022023"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KFGZ.FF.W.0216.000000T0000Z-261103T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T20:00:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9d19fb2fc80906cd7488ba41299b373ce68fe8bf.001.1,2026-11-02T02:06:00-07:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 8:00 PM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 8:00 PM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-02T23:23:53+00:00"
+}

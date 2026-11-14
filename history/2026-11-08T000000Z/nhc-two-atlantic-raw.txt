@@ -1,0 +1,31 @@
+ABNT20 KNHC 072321
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+700 PM EST Sat Nov 7 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Western and Central Atlantic (AL94):
+A broad, non-tropical low pressure system located several hundred 
+miles south-southeast of Bermuda is producing disorganized showers 
+and thunderstorms to the east of its center. The system remains in 
+close proximity to fronts, and recent satellite images indicate the 
+circulation of the low has become less defined today. Subtropical 
+development of this system is not expected while it moves generally 
+eastward and merges with a frontal system over the next day or two. 
+For more information, including Gale Warnings, see High Seas 
+Forecasts issued by the National Weather Service.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...near 0 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Reinhart
+
+

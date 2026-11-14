@@ -1,0 +1,385 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8b4bccf8b69e26d867a072130a05f47e04e7a429.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -74.12,
+                            40.31
+                        ],
+                        [
+                            -73.97,
+                            40.3
+                        ],
+                        [
+                            -74.04,
+                            40.06
+                        ],
+                        [
+                            -74.17,
+                            40.11
+                        ],
+                        [
+                            -74.16,
+                            40.12
+                        ],
+                        [
+                            -74.12,
+                            40.31
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8b4bccf8b69e26d867a072130a05f47e04e7a429.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.8b4bccf8b69e26d867a072130a05f47e04e7a429.001.1",
+                "areaDesc": "Monmouth, NJ; Ocean, NJ",
+                "geocode": {
+                    "SAME": [
+                        "034025",
+                        "034029"
+                    ],
+                    "UGC": [
+                        "NJC025",
+                        "NJC029"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NJC025",
+                    "https://api.weather.gov/zones/county/NJC029"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9c7526186d280b9aa0f8b476844882022ed2bbf0.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9c7526186d280b9aa0f8b476844882022ed2bbf0.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-12T17:59:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-12T18:26:00-05:00",
+                "effective": "2026-11-12T18:26:00-05:00",
+                "onset": "2026-11-12T18:26:00-05:00",
+                "expires": "2026-11-12T22:00:00-05:00",
+                "ends": "2026-11-12T22:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flash Flood Warning issued November 12 at 6:26PM EST until November 12 at 10:00PM EST by NWS Mount Holly NJ",
+                "description": "At 626 PM EST, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 1 and 2 inches of rain have\nfallen. The expected rainfall rate is 0.5 to 1 inch in 1 hour.\nAdditional rainfall amounts up to 1 inch are possible in the warned\narea. Flash flooding is already occurring on NJ 35 north of Sylvania\nAve in Neptune City with lanes closed in both directions.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nLong Branch, Asbury Park, Tinton Falls, Manasquan, Point Pleasant\nBeach, Allenwood, Collingwood Park, Elberon, Ramtown, Point\nPleasant, Eatontown and West Long Branch.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KPHI 122326"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 10 PM EST THIS EVENING FOR SOUTHEASTERN MONMOUTH AND NORTHEASTERN OCEAN COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPHI.FF.W.0166.000000T0000Z-261113T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-12T22:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.de3cdc744273888c1b0703b6db078e07709613bd.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -74.61,
+                            40.32
+                        ],
+                        [
+                            -74.83,
+                            40.23
+                        ],
+                        [
+                            -74.62,
+                            40.04
+                        ],
+                        [
+                            -74.44,
+                            40.16
+                        ],
+                        [
+                            -74.61,
+                            40.32
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.de3cdc744273888c1b0703b6db078e07709613bd.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.de3cdc744273888c1b0703b6db078e07709613bd.001.1",
+                "areaDesc": "Burlington, NJ; Mercer, NJ; Monmouth, NJ; Bucks, PA",
+                "geocode": {
+                    "SAME": [
+                        "034005",
+                        "034021",
+                        "034025",
+                        "042017"
+                    ],
+                    "UGC": [
+                        "NJC005",
+                        "NJC021",
+                        "NJC025",
+                        "PAC017"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NJC005",
+                    "https://api.weather.gov/zones/county/NJC021",
+                    "https://api.weather.gov/zones/county/NJC025",
+                    "https://api.weather.gov/zones/county/PAC017"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.adf72cc2457658df4f0ce4a7a5c80ae7500b16aa.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.adf72cc2457658df4f0ce4a7a5c80ae7500b16aa.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-12T15:57:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-12T17:00:00-05:00",
+                "effective": "2026-11-12T17:00:00-05:00",
+                "onset": "2026-11-12T17:00:00-05:00",
+                "expires": "2026-11-12T20:00:00-05:00",
+                "ends": "2026-11-12T20:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flash Flood Warning issued November 12 at 5:00PM EST until November 12 at 8:00PM EST by NWS Mount Holly NJ",
+                "description": "At 500 PM EST, flash flooding was reported on US-1 Southbound near\nMorrisville in Bucks County.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nTrenton, Ewing, Bordentown, Allentown, Crosswicks,\nMercerville-Hamilton Square, Edinburg, Windsor, White Horse,\nGeorgetown, Imlaystown and Cream Ridge.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KPHI 122200"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 8 PM EST THIS EVENING FOR SOUTHEASTERN MERCER, SOUTHWESTERN MONMOUTH, NORTHERN BURLINGTON AND SOUTHEASTERN BUCKS COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPHI.FF.W.0165.000000T0000Z-261113T0100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-12T20:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9b127a1e25d4662fcdfa857983058ae95e3daa8f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -74.93,
+                            39.93
+                        ],
+                        [
+                            -75.15,
+                            40.18
+                        ],
+                        [
+                            -74.89,
+                            40.29
+                        ],
+                        [
+                            -74.63,
+                            40.06
+                        ],
+                        [
+                            -74.93,
+                            39.93
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9b127a1e25d4662fcdfa857983058ae95e3daa8f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.9b127a1e25d4662fcdfa857983058ae95e3daa8f.001.1",
+                "areaDesc": "Burlington, NJ; Bucks, PA; Montgomery, PA; Philadelphia, PA",
+                "geocode": {
+                    "SAME": [
+                        "034005",
+                        "042017",
+                        "042091",
+                        "042101"
+                    ],
+                    "UGC": [
+                        "NJC005",
+                        "PAC017",
+                        "PAC091",
+                        "PAC101"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NJC005",
+                    "https://api.weather.gov/zones/county/PAC017",
+                    "https://api.weather.gov/zones/county/PAC091",
+                    "https://api.weather.gov/zones/county/PAC101"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.eeee743da1b50865a4520c9956d843caa3f72d66.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.eeee743da1b50865a4520c9956d843caa3f72d66.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-12T15:27:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-12T16:22:00-05:00",
+                "effective": "2026-11-12T16:22:00-05:00",
+                "onset": "2026-11-12T16:22:00-05:00",
+                "expires": "2026-11-12T19:30:00-05:00",
+                "ends": "2026-11-12T19:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flash Flood Warning issued November 12 at 4:22PM EST until November 12 at 7:30PM EST by NWS Mount Holly NJ",
+                "description": "At 422 PM EST, flash flooding was reported in Bucks County 1 mile\nnorthwest of Tullytown. Haines Street was impassable.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nPhiladelphia, Bensalem, Mount Laurel, Willingboro, Florence,\nBurlington, Bristol, Mount Holly, Riverside, Hatboro, Beverly and\nYardley.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KPHI 122122"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 730 PM EST THIS EVENING FOR NORTHWESTERN BURLINGTON, SOUTHEASTERN BUCKS, EAST CENTRAL MONTGOMERY AND NORTHEASTERN PHILADELPHIA COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPHI.FF.W.0164.000000T0000Z-261113T0030Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-12T19:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-13T00:03:35+00:00"
+}

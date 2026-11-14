@@ -1,0 +1,767 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a315f0ba73fe0e93d149ebdf5b1d2bd72aa6d2b3.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -92.6,
+                            30.9
+                        ],
+                        [
+                            -92.61,
+                            30.93
+                        ],
+                        [
+                            -92.53,
+                            30.96
+                        ],
+                        [
+                            -92.4,
+                            31
+                        ],
+                        [
+                            -92.41,
+                            30.99
+                        ],
+                        [
+                            -92.4,
+                            30.99
+                        ],
+                        [
+                            -92.41,
+                            30.83
+                        ],
+                        [
+                            -92.59,
+                            30.83
+                        ],
+                        [
+                            -92.6,
+                            30.87
+                        ],
+                        [
+                            -92.6,
+                            30.9
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a315f0ba73fe0e93d149ebdf5b1d2bd72aa6d2b3.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a315f0ba73fe0e93d149ebdf5b1d2bd72aa6d2b3.001.1",
+                "areaDesc": "Evangeline, LA; Rapides, LA",
+                "geocode": {
+                    "SAME": [
+                        "022039",
+                        "022079"
+                    ],
+                    "UGC": [
+                        "LAC039",
+                        "LAC079"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/LAC039",
+                    "https://api.weather.gov/zones/county/LAC079"
+                ],
+                "references": [],
+                "sent": "2026-11-01T00:45:00-06:00",
+                "effective": "2026-11-01T00:45:00-06:00",
+                "onset": "2026-11-01T00:45:00-06:00",
+                "expires": "2026-11-01T04:45:00-06:00",
+                "ends": "2026-11-01T04:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Lake Charles LA",
+                "headline": "Flash Flood Warning issued November 1 at 1:45AM CDT until November 1 at 4:45AM CST by NWS Lake Charles LA",
+                "description": "FFWLCH\n\nThe National Weather Service in Lake Charles has issued a\n\n* Flash Flood Warning for...\nNorthwestern Evangeline Parish in central Louisiana...\nSouth Central Rapides Parish in central Louisiana...\n\n* Until 445 AM CST.\n\n* At 145 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 3 and 7 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nTurkey Creek.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLCH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLCH 010645"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLCH.FF.W.0075.261101T0645Z-261101T1045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T04:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.54f4ee01babcd8271d083e34eebe4d21e7beec68.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -159.81,
+                            22.07
+                        ],
+                        [
+                            -159.74,
+                            22.17
+                        ],
+                        [
+                            -159.58,
+                            22.25
+                        ],
+                        [
+                            -159.53,
+                            22.24
+                        ],
+                        [
+                            -159.5,
+                            22.26
+                        ],
+                        [
+                            -159.45,
+                            22.25
+                        ],
+                        [
+                            -159.42,
+                            22.26
+                        ],
+                        [
+                            -159.4,
+                            22.26
+                        ],
+                        [
+                            -159.32,
+                            22.22
+                        ],
+                        [
+                            -159.3,
+                            22.17
+                        ],
+                        [
+                            -159.27,
+                            22.15
+                        ],
+                        [
+                            -159.32,
+                            22.04
+                        ],
+                        [
+                            -159.31,
+                            21.95
+                        ],
+                        [
+                            -159.38,
+                            21.88
+                        ],
+                        [
+                            -159.45,
+                            21.84
+                        ],
+                        [
+                            -159.61,
+                            21.87
+                        ],
+                        [
+                            -159.67,
+                            21.93
+                        ],
+                        [
+                            -159.77,
+                            21.96
+                        ],
+                        [
+                            -159.79,
+                            21.98
+                        ],
+                        [
+                            -159.81,
+                            22.06
+                        ],
+                        [
+                            -159.81,
+                            22.07
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.54f4ee01babcd8271d083e34eebe4d21e7beec68.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.54f4ee01babcd8271d083e34eebe4d21e7beec68.001.1",
+                "areaDesc": "Kauai, HI",
+                "geocode": {
+                    "SAME": [
+                        "015007"
+                    ],
+                    "UGC": [
+                        "HIC007"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/HIC007"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3a094afdded7eb235f111280326d96dc6e3f7c75.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.3a094afdded7eb235f111280326d96dc6e3f7c75.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-31T17:08:00-10:00"
+                    }
+                ],
+                "sent": "2026-10-31T20:34:00-10:00",
+                "effective": "2026-10-31T20:34:00-10:00",
+                "onset": "2026-10-31T20:34:00-10:00",
+                "expires": "2026-10-31T23:45:00-10:00",
+                "ends": "2026-10-31T23:45:00-10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flash Flood Warning issued October 31 at 8:34PM HST until October 31 at 11:45PM HST by NWS Honolulu HI",
+                "description": "FFWHFO\n\nThe National Weather Service in Honolulu has extended the\n\n* Flash Flood Warning for...\nThe island of Kauai in Kauai County\n\n* Until 1145 PM HST.\n\n* At 834 PM HST, gauge reports indicate flooding continues on the\nHanalei River, including at and near Hanalei Bridge. Therefore,\neven though heavy rain has ended, the flood warning is being\nextended.\n\nHAZARD...Flash flooding caused by previous heavy rain.\n\nSOURCE...Gauges reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Areas along and near the Hanalei River, including the Hanalei\nBridge.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW50 PHFO 010634"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.PHFO.FF.W.0058.000000T0000Z-261101T0945Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-31T23:45:00-10:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.fb331ec323ae3effc7f7209349b6e81ea92f5670.001.1,2026-10-31T16:24:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.462c6bd7684c6ddfee0f6131ae1c3e9dffd9b707.001.1,2026-10-31T14:19:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.e48903c7f86b63b9a55a8692fbcc9b61de85c25e.001.1,2026-10-31T13:20:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.7ed2b34c4407a3fd56e528108c0237e50edd86bc.001.1,2026-10-31T11:45:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d2b804e4134e3f46dd8c2a7985bb1a3f0d9dcac4.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -89.85,
+                            30.71
+                        ],
+                        [
+                            -89.95,
+                            30.74
+                        ],
+                        [
+                            -89.98,
+                            30.77
+                        ],
+                        [
+                            -89.98,
+                            30.8
+                        ],
+                        [
+                            -89.95,
+                            30.83
+                        ],
+                        [
+                            -89.9,
+                            30.85
+                        ],
+                        [
+                            -89.82,
+                            30.86
+                        ],
+                        [
+                            -89.76,
+                            30.87
+                        ],
+                        [
+                            -89.78,
+                            30.8
+                        ],
+                        [
+                            -89.78,
+                            30.77
+                        ],
+                        [
+                            -89.8,
+                            30.75
+                        ],
+                        [
+                            -89.8,
+                            30.74
+                        ],
+                        [
+                            -89.79,
+                            30.72
+                        ],
+                        [
+                            -89.85,
+                            30.71
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d2b804e4134e3f46dd8c2a7985bb1a3f0d9dcac4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d2b804e4134e3f46dd8c2a7985bb1a3f0d9dcac4.001.1",
+                "areaDesc": "Washington, LA; Pearl River, MS",
+                "geocode": {
+                    "SAME": [
+                        "022117",
+                        "028109"
+                    ],
+                    "UGC": [
+                        "LAC117",
+                        "MSC109"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/LAC117",
+                    "https://api.weather.gov/zones/county/MSC109"
+                ],
+                "references": [],
+                "sent": "2026-10-31T23:50:00-06:00",
+                "effective": "2026-10-31T23:50:00-06:00",
+                "onset": "2026-10-31T23:50:00-06:00",
+                "expires": "2026-11-01T02:00:00-06:00",
+                "ends": "2026-11-01T02:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS New Orleans LA",
+                "headline": "Flash Flood Warning issued November 1 at 12:50AM CDT until November 1 at 2:00AM CST by NWS New Orleans LA",
+                "description": "FFWLIX\n\nThe National Weather Service in New Orleans has issued a\n\n* Flash Flood Warning for...\nSoutheastern Washington Parish in southeastern Louisiana...\nWest Central Pearl River County in southern Mississippi...\n\n* Until 200 AM CST.\n\n* At 1250 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 4 and 8 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBogalusa.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLIX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLIX 010550"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLIX.FF.W.0127.261101T0550Z-261101T0800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T02:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.49192b458067d3766679a8b68ec009379a6896b5.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -89.78,
+                            30.77
+                        ],
+                        [
+                            -89.8,
+                            30.75
+                        ],
+                        [
+                            -89.79,
+                            30.72
+                        ],
+                        [
+                            -89.77,
+                            30.69
+                        ],
+                        [
+                            -89.73,
+                            30.68
+                        ],
+                        [
+                            -89.66,
+                            30.68
+                        ],
+                        [
+                            -89.63,
+                            30.71
+                        ],
+                        [
+                            -89.64,
+                            30.75
+                        ],
+                        [
+                            -89.66,
+                            30.78
+                        ],
+                        [
+                            -89.69,
+                            30.75
+                        ],
+                        [
+                            -89.74,
+                            30.75
+                        ],
+                        [
+                            -89.78,
+                            30.77
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.49192b458067d3766679a8b68ec009379a6896b5.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.49192b458067d3766679a8b68ec009379a6896b5.001.1",
+                "areaDesc": "Pearl River, MS",
+                "geocode": {
+                    "SAME": [
+                        "028109"
+                    ],
+                    "UGC": [
+                        "MSC109"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MSC109"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f7675ec1dc05119ccc8a37817a5fa75fd4643941.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.f7675ec1dc05119ccc8a37817a5fa75fd4643941.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-31T20:53:00-06:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f34b3814c4cdebf579207a1e483f9b8dd8cc34a2.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.f34b3814c4cdebf579207a1e483f9b8dd8cc34a2.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-31T22:19:00-06:00"
+                    }
+                ],
+                "sent": "2026-10-31T23:49:00-06:00",
+                "effective": "2026-10-31T23:49:00-06:00",
+                "onset": "2026-10-31T23:49:00-06:00",
+                "expires": "2026-11-01T02:00:00-06:00",
+                "ends": "2026-11-01T02:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS New Orleans LA",
+                "headline": "Flash Flood Warning issued November 1 at 12:49AM CDT until November 1 at 2:00AM CST by NWS New Orleans LA",
+                "description": "FFWLIX\n\nThe National Weather Service in New Orleans has extended the\n\n* Flash Flood Warning for...\nWest Central Pearl River County in southern Mississippi...\n\n* Until 200 AM CST.\n\n* At 1249 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 5 and 10 inches of rain\nhave fallen. Flash flooding is ongoing.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nMainly rural areas of West Central Pearl River County.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLIX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLIX 010549"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KLIX.FF.W.0126.000000T0000Z-261101T0800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T02:00:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:00 AM CST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:00 AM CST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.147061a06c96dd3646c496bec8bed20cf8daa20c.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -89.67,
+                            30.89
+                        ],
+                        [
+                            -89.72,
+                            30.89
+                        ],
+                        [
+                            -89.76,
+                            30.87
+                        ],
+                        [
+                            -89.78,
+                            30.8
+                        ],
+                        [
+                            -89.78,
+                            30.77
+                        ],
+                        [
+                            -89.74,
+                            30.75
+                        ],
+                        [
+                            -89.69,
+                            30.75
+                        ],
+                        [
+                            -89.66,
+                            30.78
+                        ],
+                        [
+                            -89.64,
+                            30.82
+                        ],
+                        [
+                            -89.64,
+                            30.87
+                        ],
+                        [
+                            -89.67,
+                            30.89
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.147061a06c96dd3646c496bec8bed20cf8daa20c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.147061a06c96dd3646c496bec8bed20cf8daa20c.001.1",
+                "areaDesc": "Pearl River, MS",
+                "geocode": {
+                    "SAME": [
+                        "028109"
+                    ],
+                    "UGC": [
+                        "MSC109"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MSC109"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c08fdff855033468d0d8d4b198924e61d86be9f9.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.c08fdff855033468d0d8d4b198924e61d86be9f9.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-31T20:47:00-06:00"
+                    }
+                ],
+                "sent": "2026-10-31T23:43:00-06:00",
+                "effective": "2026-10-31T23:43:00-06:00",
+                "onset": "2026-10-31T23:43:00-06:00",
+                "expires": "2026-11-01T02:00:00-06:00",
+                "ends": "2026-11-01T02:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS New Orleans LA",
+                "headline": "Flash Flood Warning issued November 1 at 12:43AM CDT until November 1 at 2:00AM CST by NWS New Orleans LA",
+                "description": "FFWLIX\n\nThe National Weather Service in New Orleans has extended the\n\n* Flash Flood Warning for...\nWest Central Pearl River County in southern Mississippi...\n\n* Until 200 AM CST.\n\n* At 1243 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain in northeast of Crossroads. Between 10 and 17 inches of\nrain have fallen. Flash flooding is already occurring.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nCrossroads.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLIX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLIX 010543"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KLIX.FF.W.0125.000000T0000Z-261101T0800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T02:00:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:00 AM CST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:00 AM CST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-01T07:20:06+00:00"
+}

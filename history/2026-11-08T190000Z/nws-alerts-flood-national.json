@@ -1,0 +1,746 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c2171bc9d72a35fe8e257f7f8a0d09f9a1e3d7c2.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.27,
+                            27.54
+                        ],
+                        [
+                            -97.84,
+                            27.55
+                        ],
+                        [
+                            -97.64,
+                            27.53
+                        ],
+                        [
+                            -97.63,
+                            27.52
+                        ],
+                        [
+                            -97.72,
+                            27.27
+                        ],
+                        [
+                            -97.78,
+                            27.28
+                        ],
+                        [
+                            -97.82,
+                            27.27
+                        ],
+                        [
+                            -98.26,
+                            27.26
+                        ],
+                        [
+                            -98.27,
+                            27.54
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c2171bc9d72a35fe8e257f7f8a0d09f9a1e3d7c2.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.c2171bc9d72a35fe8e257f7f8a0d09f9a1e3d7c2.001.1",
+                "areaDesc": "Duval, TX; Jim Wells, TX; Kleberg, TX",
+                "geocode": {
+                    "SAME": [
+                        "048131",
+                        "048249",
+                        "048273"
+                    ],
+                    "UGC": [
+                        "TXC131",
+                        "TXC249",
+                        "TXC273"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC131",
+                    "https://api.weather.gov/zones/county/TXC249",
+                    "https://api.weather.gov/zones/county/TXC273"
+                ],
+                "references": [],
+                "sent": "2026-11-08T13:23:00-06:00",
+                "effective": "2026-11-08T13:23:00-06:00",
+                "onset": "2026-11-08T13:23:00-06:00",
+                "expires": "2026-11-08T16:30:00-06:00",
+                "ends": "2026-11-08T16:30:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Corpus Christi TX",
+                "headline": "Flash Flood Warning issued November 8 at 1:23PM CST until November 8 at 4:30PM CST by NWS Corpus Christi TX",
+                "description": "FFWCRP\n\nThe National Weather Service in Corpus Christi has issued a\n\n* Flash Flood Warning for...\nSoutheastern Duval County in south central Texas...\nSouthwestern Jim Wells County in south central Texas...\nWestern Kleberg County in south central Texas...\n\n* Until 430 PM CST.\n\n* At 123 PM CST, local law enforcement reported flash flooding on\nHighways 141 and also 281 in Kleberg county. Between 5 and 8 inches\nof rain have fallen. Flooding impacts will continue, but no\nadditional rainfall is occurring. Flash flooding is already\noccurring.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Law enforcement reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nKingsville, Premont, Ricardo, Kingsville Naval Air Station,\nRiviera, La Gloria and Loyola Beach.\n\nThis includes the following highways...\nUS Highway 281 between mile markers 688 and 706. US Highway 77\nbetween mile markers 690 and 708.\n\nThis includes the following streams and drainages...\nEbanito Creek, Derramadero de Machos, Paisano Creek, San Fernando\nCreek, Lagunas Negras, Jaboncillos Creek, Ramada del Toro Creek,\nTranquitas Creek, Baffin Bay, Salado Creek, Chiltipin Creek, Las\nAnimas Creek, Araa Creek, Escondido Creek, Cibolo Creek and Olmos\nCreek, Los.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCRP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KCRP 081923"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCRP.FF.W.0045.261108T1923Z-261108T2230Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-08T16:30:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.01008b96dac39f7a04ddcc53eb85874a9b3b68cb.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -100.79,
+                            30.29
+                        ],
+                        [
+                            -99.55,
+                            30.29
+                        ],
+                        [
+                            -99.54,
+                            30.28
+                        ],
+                        [
+                            -99.18,
+                            29.84
+                        ],
+                        [
+                            -99.36,
+                            29.63
+                        ],
+                        [
+                            -99.41,
+                            29.63
+                        ],
+                        [
+                            -99.41,
+                            29.56
+                        ],
+                        [
+                            -99.47,
+                            29.49
+                        ],
+                        [
+                            -100.84,
+                            29.47
+                        ],
+                        [
+                            -101.15,
+                            29.72
+                        ],
+                        [
+                            -100.79,
+                            30.29
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.01008b96dac39f7a04ddcc53eb85874a9b3b68cb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.01008b96dac39f7a04ddcc53eb85874a9b3b68cb.001.1",
+                "areaDesc": "Bandera, TX; Edwards, TX; Kerr, TX; Kinney, TX; Real, TX; Uvalde, TX; Val Verde, TX",
+                "geocode": {
+                    "SAME": [
+                        "048019",
+                        "048137",
+                        "048265",
+                        "048271",
+                        "048385",
+                        "048463",
+                        "048465"
+                    ],
+                    "UGC": [
+                        "TXC019",
+                        "TXC137",
+                        "TXC265",
+                        "TXC271",
+                        "TXC385",
+                        "TXC463",
+                        "TXC465"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC019",
+                    "https://api.weather.gov/zones/county/TXC137",
+                    "https://api.weather.gov/zones/county/TXC265",
+                    "https://api.weather.gov/zones/county/TXC271",
+                    "https://api.weather.gov/zones/county/TXC385",
+                    "https://api.weather.gov/zones/county/TXC463",
+                    "https://api.weather.gov/zones/county/TXC465"
+                ],
+                "references": [],
+                "sent": "2026-11-08T13:23:00-06:00",
+                "effective": "2026-11-08T13:23:00-06:00",
+                "onset": "2026-11-08T13:23:00-06:00",
+                "expires": "2026-11-08T20:00:00-06:00",
+                "ends": "2026-11-08T20:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Austin/San Antonio TX",
+                "headline": "Flash Flood Warning issued November 8 at 1:23PM CST until November 8 at 8:00PM CST by NWS Austin/San Antonio TX",
+                "description": "FFWEWX\n\nThe National Weather Service in Austin/San Antonio has issued a\n\n* Flash Flood Warning for...\nWestern Bandera County in south central Texas...\nEdwards County in south central Texas...\nNorthwestern Kerr County in south central Texas...\nNorthern Kinney County in south central Texas...\nReal County in south central Texas...\nNorthern Uvalde County in south central Texas...\nNortheastern Val Verde County in south central Texas...\n\n* Until 800 PM CST Sunday.\n\n* At 123 PM CST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 3 and 5 inches of rain\nhave fallen. Additional rainfall amounts up to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nalong highways where low water crossings exist.\n\n* Some locations that will experience flash flooding include...\nMedina, Rocksprings, Leakey, Loma Alta, Vanderpool, Camp Wood,\nVance, Barksdale, Montell, Tuff, Reagan Wells, Rio Frio, Garner\nState Park, Carta Valley, Lost Maples State Natural Area, Concan,\nKerr Wildlife Management Area, Utopia, Devil's Sinkhole State\nNatural Area and Kickapoo Cavern State Park.\n\nAt 1:21 PM, Edwards County Emergency Management reported several low\nwater crossings near Barksdale were flooded, some of which were\nimpassable.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nIn hilly terrain there are hundreds of low water crossings which are\npotentially dangerous in heavy rain. Do not attempt to cross flooded\nroads. Find an alternate route.\n\nFlooding is occurring or is imminent. It is important to know where\nyou are relative to streams, rivers, or creeks which can become\nkillers in heavy rains. Campers and hikers should avoid streams or\ncreeks.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEWX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEWX 081923"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEWX.FF.W.0108.261108T1923Z-261109T0200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-08T20:00:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 8:00 PM CST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 8:00 PM CST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a01824cbcc523f10dc5b82d5796af8740e27af9b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -65.76,
+                            18.29
+                        ],
+                        [
+                            -65.76,
+                            18.38
+                        ],
+                        [
+                            -65.72,
+                            18.39
+                        ],
+                        [
+                            -65.72,
+                            18.37
+                        ],
+                        [
+                            -65.66,
+                            18.36
+                        ],
+                        [
+                            -65.62,
+                            18.38
+                        ],
+                        [
+                            -65.65,
+                            18.32
+                        ],
+                        [
+                            -65.59,
+                            18.22
+                        ],
+                        [
+                            -65.63,
+                            18.24
+                        ],
+                        [
+                            -65.63,
+                            18.2
+                        ],
+                        [
+                            -65.66,
+                            18.21
+                        ],
+                        [
+                            -65.7,
+                            18.19
+                        ],
+                        [
+                            -65.69,
+                            18.18
+                        ],
+                        [
+                            -65.83,
+                            18.2
+                        ],
+                        [
+                            -65.83,
+                            18.21
+                        ],
+                        [
+                            -65.81,
+                            18.29
+                        ],
+                        [
+                            -65.76,
+                            18.29
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a01824cbcc523f10dc5b82d5796af8740e27af9b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a01824cbcc523f10dc5b82d5796af8740e27af9b.001.1",
+                "areaDesc": "Ceiba, PR; Fajardo, PR; Luquillo, PR; Naguabo, PR",
+                "geocode": {
+                    "SAME": [
+                        "072037",
+                        "072053",
+                        "072089",
+                        "072103"
+                    ],
+                    "UGC": [
+                        "PRC037",
+                        "PRC053",
+                        "PRC089",
+                        "PRC103"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PRC037",
+                    "https://api.weather.gov/zones/county/PRC053",
+                    "https://api.weather.gov/zones/county/PRC089",
+                    "https://api.weather.gov/zones/county/PRC103"
+                ],
+                "references": [],
+                "sent": "2026-11-08T15:22:00-04:00",
+                "effective": "2026-11-08T15:22:00-04:00",
+                "onset": "2026-11-08T15:22:00-04:00",
+                "expires": "2026-11-08T17:45:00-04:00",
+                "ends": "2026-11-08T17:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS San Juan PR",
+                "headline": "Flash Flood Warning issued November 8 at 3:22PM AST until November 8 at 5:45PM AST by NWS San Juan PR",
+                "description": "FFWSJU\n\nThe National Weather Service in San Juan has issued a\n\n* Flash Flood Warning for...\nCeiba County in Puerto Rico...\nFajardo County in Puerto Rico...\nLuquillo County in Puerto Rico...\nNaguabo County in Puerto Rico...\n\n* Until 545 PM AST.\n\n* At 322 PM AST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nThis includes the following streams and drainages...\nRio Pitahaya, Rio Gurabo, Rio Mameyes, Quebrada Fajardo to Laguna\nGrande Coastal Drainage Watersheds, Rio Icacos, Rio Anton Ruiz, Rio\nBlanco, Rio Fajardo, Rio Sabana at mouth, Rio Santiago, Coastal\nWatershed, Rio Espiritu Santo near mouth, Bahia Algodones to\nEnsenada Honda Coastal Watersheds, Rio Cubuy, Rio Juan Martin and\nRio Espiritu Santo.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSJU"
+                    ],
+                    "WMOidentifier": [
+                        "WGCA52 TJSJ 081922"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.TJSJ.FF.W.0040.261108T1922Z-261108T2145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-08T17:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.961086c8f17634cb563618d728129578bb78d567.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -65.95,
+                            18.23
+                        ],
+                        [
+                            -65.98,
+                            18.23
+                        ],
+                        [
+                            -65.99,
+                            18.21
+                        ],
+                        [
+                            -66.01,
+                            18.22
+                        ],
+                        [
+                            -66.01,
+                            18.28
+                        ],
+                        [
+                            -66.03,
+                            18.3
+                        ],
+                        [
+                            -65.97,
+                            18.31
+                        ],
+                        [
+                            -65.94,
+                            18.28
+                        ],
+                        [
+                            -65.88,
+                            18.25
+                        ],
+                        [
+                            -65.85,
+                            18.25
+                        ],
+                        [
+                            -65.84,
+                            18.27
+                        ],
+                        [
+                            -65.82,
+                            18.27
+                        ],
+                        [
+                            -65.83,
+                            18.19
+                        ],
+                        [
+                            -65.86,
+                            18.17
+                        ],
+                        [
+                            -65.86,
+                            18.14
+                        ],
+                        [
+                            -65.88,
+                            18.12
+                        ],
+                        [
+                            -65.9,
+                            18.13
+                        ],
+                        [
+                            -65.93,
+                            18.12
+                        ],
+                        [
+                            -65.93,
+                            18.2
+                        ],
+                        [
+                            -65.95,
+                            18.21
+                        ],
+                        [
+                            -65.95,
+                            18.23
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.961086c8f17634cb563618d728129578bb78d567.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.961086c8f17634cb563618d728129578bb78d567.001.1",
+                "areaDesc": "Gurabo, PR; Juncos, PR; Las Piedras, PR",
+                "geocode": {
+                    "SAME": [
+                        "072063",
+                        "072077",
+                        "072085"
+                    ],
+                    "UGC": [
+                        "PRC063",
+                        "PRC077",
+                        "PRC085"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PRC063",
+                    "https://api.weather.gov/zones/county/PRC077",
+                    "https://api.weather.gov/zones/county/PRC085"
+                ],
+                "references": [],
+                "sent": "2026-11-08T14:55:00-04:00",
+                "effective": "2026-11-08T14:55:00-04:00",
+                "onset": "2026-11-08T14:55:00-04:00",
+                "expires": "2026-11-08T17:00:00-04:00",
+                "ends": "2026-11-08T17:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS San Juan PR",
+                "headline": "Flash Flood Warning issued November 8 at 2:55PM AST until November 8 at 5:00PM AST by NWS San Juan PR",
+                "description": "FFWSJU\n\nThe National Weather Service in San Juan has issued a\n\n* Flash Flood Warning for...\nGurabo County in Puerto Rico...\nJuncos County in Puerto Rico...\nLas Piedras County in Puerto Rico...\n\n* Until 500 PM AST.\n\n* At 255 PM AST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2.5 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSJU"
+                    ],
+                    "WMOidentifier": [
+                        "WGCA52 TJSJ 081855"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.TJSJ.FF.W.0039.261108T1855Z-261108T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-08T17:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.516b2a9713fbc415dc708e4cda499218d4dc6780.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -97.54,
+                            27.28
+                        ],
+                        [
+                            -97.27,
+                            27.58
+                        ],
+                        [
+                            -97.22,
+                            27.55
+                        ],
+                        [
+                            -97.31,
+                            27.38
+                        ],
+                        [
+                            -97.35,
+                            27.28
+                        ],
+                        [
+                            -97.54,
+                            27.28
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.516b2a9713fbc415dc708e4cda499218d4dc6780.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.516b2a9713fbc415dc708e4cda499218d4dc6780.001.1",
+                "areaDesc": "Kleberg, TX",
+                "geocode": {
+                    "SAME": [
+                        "048273"
+                    ],
+                    "UGC": [
+                        "TXC273"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC273"
+                ],
+                "references": [],
+                "sent": "2026-11-08T12:36:00-06:00",
+                "effective": "2026-11-08T12:36:00-06:00",
+                "onset": "2026-11-08T12:36:00-06:00",
+                "expires": "2026-11-08T15:30:00-06:00",
+                "ends": "2026-11-08T15:30:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Corpus Christi TX",
+                "headline": "Flash Flood Warning issued November 8 at 12:36PM CST until November 8 at 3:30PM CST by NWS Corpus Christi TX",
+                "description": "FFWCRP\n\nThe National Weather Service in Corpus Christi has issued a\n\n* Flash Flood Warning for...\nSoutheastern Kleberg County in south central Texas...\n\n* Until 330 PM CST.\n\n* At 1236 PM CST, Doppler radar indicated heavy rain across the\nwarned area. Between 1 and 3 inches of rain have fallen. Additional\nrainfall amounts of 1 to 3 inches are possible in the warned area.\nFlash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMalaquite Beach.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCRP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KCRP 081836"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCRP.FF.W.0044.261108T1836Z-261108T2130Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-08T15:30:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-08T19:30:00+00:00"
+}

@@ -1,0 +1,166 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.892aaf209c58bbbe3528003e2f24adfdf1eca5d5.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -74.06,
+                            40.43
+                        ],
+                        [
+                            -74.08,
+                            40.31
+                        ],
+                        [
+                            -74.14,
+                            40.31
+                        ],
+                        [
+                            -74.17,
+                            40.45
+                        ],
+                        [
+                            -74.16,
+                            40.45
+                        ],
+                        [
+                            -74.15,
+                            40.44
+                        ],
+                        [
+                            -74.16,
+                            40.46
+                        ],
+                        [
+                            -74.15,
+                            40.45
+                        ],
+                        [
+                            -74.14,
+                            40.45
+                        ],
+                        [
+                            -74.14,
+                            40.46
+                        ],
+                        [
+                            -74.11,
+                            40.44
+                        ],
+                        [
+                            -74.09,
+                            40.44
+                        ],
+                        [
+                            -74.08,
+                            40.43
+                        ],
+                        [
+                            -74.06,
+                            40.43
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.892aaf209c58bbbe3528003e2f24adfdf1eca5d5.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.892aaf209c58bbbe3528003e2f24adfdf1eca5d5.001.1",
+                "areaDesc": "Monmouth, NJ",
+                "geocode": {
+                    "SAME": [
+                        "034025"
+                    ],
+                    "UGC": [
+                        "NJC025"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NJC025"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7ff73c3785445b9c50d47b24b82f13ffb541a09e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.7ff73c3785445b9c50d47b24b82f13ffb541a09e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-12T11:45:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-12T12:31:00-05:00",
+                "effective": "2026-11-12T12:31:00-05:00",
+                "onset": "2026-11-12T12:31:00-05:00",
+                "expires": "2026-11-12T15:45:00-05:00",
+                "ends": "2026-11-12T15:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flash Flood Warning issued November 12 at 12:31PM EST until November 12 at 3:45PM EST by NWS Mount Holly NJ",
+                "description": "At 1231 PM EST, NJ511 reported flooding on NJ35 in Middletown\nTownship. All lanes were closed in the southbound direction at CR50\nand New Monmouth Road. The northbound lanes south of Kings Highway\nand Tindall Road were also closed.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nMiddletown, Tinton Falls, Red Bank, Keansburg, Lincroft and North\nMiddletown.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KPHI 121731"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 345 PM EST THIS AFTERNOON FOR NORTHEASTERN MONMOUTH COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPHI.FF.W.0160.000000T0000Z-261112T2045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-12T15:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-12T18:05:36+00:00"
+}

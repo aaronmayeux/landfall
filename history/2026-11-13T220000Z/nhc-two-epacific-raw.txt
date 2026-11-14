@@ -1,0 +1,33 @@
+ABPZ20 KNHC 131740
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1000 AM PST Fri Nov 13 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Well West-Southwest of the Hawaiian Islands (Remnants of Pena):
+Showers and thunderstorms have increased but remain disorganized in 
+association with the remnants of Pena crossing the International 
+Date Line. Environmental conditions are only marginally conducive, 
+and redevelopment of this system is unlikely as it moves into the 
+western Pacific basin. This will be the final Tropical Weather 
+Outlook issued by the National Hurricane Center on this system. 
+Future information can be found in products issued by the Joint 
+Typhoon Warning Center and the Japan Meteorological Agency.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...10 percent.
+
+&&
+Products issued by the U.S. Joint Typhoon Warning Center can be 
+found at: www.metoc.navy.mil/jtwc/jtwc.html 
+
+Official tropical cyclone forecast information issued by the Japan 
+Meteorological Agency for the western Pacific basin can be found 
+at: www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/RSMC_HP.html
+
+$$
+Forecaster Papin 
+
+

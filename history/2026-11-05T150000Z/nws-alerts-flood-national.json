@@ -1,0 +1,273 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f1453435e5d71817e467f1ff57ff6f87c8b51015.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.44,
+                            34.99
+                        ],
+                        [
+                            -84.44,
+                            35.05
+                        ],
+                        [
+                            -84.33,
+                            35.05
+                        ],
+                        [
+                            -84.34,
+                            34.99
+                        ],
+                        [
+                            -84.44,
+                            34.99
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f1453435e5d71817e467f1ff57ff6f87c8b51015.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f1453435e5d71817e467f1ff57ff6f87c8b51015.001.1",
+                "areaDesc": "Polk, TN",
+                "geocode": {
+                    "SAME": [
+                        "047139"
+                    ],
+                    "UGC": [
+                        "TNC139"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TNC139"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.982e89ad0668d173bfb8c614b3f3a35d1d111568.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.982e89ad0668d173bfb8c614b3f3a35d1d111568.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-05T06:23:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-05T08:57:00-05:00",
+                "effective": "2026-11-05T08:57:00-05:00",
+                "onset": "2026-11-05T08:57:00-05:00",
+                "expires": "2026-11-05T11:00:00-05:00",
+                "ends": "2026-11-05T11:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Morristown TN",
+                "headline": "Flash Flood Warning issued November 5 at 8:57AM EST until November 5 at 11:00AM EST by NWS Morristown TN",
+                "description": "FFWMRX\n\nThe National Weather Service in Morristown has extended the\n\n* Flash Flood Warning for...\nSoutheastern Polk County in east Tennessee...\n\n* Until 1100 AM EST.\n\n* At 857 AM EST, Local law enforcement reported widespread\ncatastrophic flash flooding was still ongoing with numerous\nbusinesses and homes under several feet of water.\n\nFLASH FLOOD EMERGENCY for Copperhill. This is a PARTICULARLY\nDANGEROUS SITUATION. SEEK HIGHER GROUND NOW!\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Emergency management reported.\n\nIMPACT...This is a PARTICULARLY DANGEROUS SITUATION. SEEK HIGHER\nGROUND NOW! Life threatening flash flooding of low water\ncrossings, small creeks and streams, urban areas,\nhighways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nDucktown and Copperhill.",
+                "instruction": "Move to higher ground now! This is an extremely dangerous and\nlife-threatening situation. Do not attempt to travel unless you are\nfleeing an area subject to flooding or under an evacuation order.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMRX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KMRX 051357"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD EMERGENCY FOR COPPERHILL"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CATASTROPHIC"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KMRX.FF.W.0083.000000T0000Z-261105T1600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-05T11:00:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.61ee64a36bfea92b3e8845ffd0fb996e39a011ff.001.1,2026-11-05T03:58:00-05:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD EMERGENCY this area til 11:00 AM EST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD EMERGENCY is in effect for this area until 11:00 AM EST. This is an extremely dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6ff6910c2f866d8fefe7fd243a08e7a6982bdbc7.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.34,
+                            34.99
+                        ],
+                        [
+                            -84.33,
+                            34.96
+                        ],
+                        [
+                            -84.43,
+                            34.96
+                        ],
+                        [
+                            -84.44,
+                            34.99
+                        ],
+                        [
+                            -84.34,
+                            34.99
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6ff6910c2f866d8fefe7fd243a08e7a6982bdbc7.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6ff6910c2f866d8fefe7fd243a08e7a6982bdbc7.001.1",
+                "areaDesc": "Fannin, GA",
+                "geocode": {
+                    "SAME": [
+                        "013111"
+                    ],
+                    "UGC": [
+                        "GAC111"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC111"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f5786909c628c09903e8a9251628edfab03ff0e3.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.f5786909c628c09903e8a9251628edfab03ff0e3.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-05T06:39:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-05T08:57:00-05:00",
+                "effective": "2026-11-05T08:57:00-05:00",
+                "onset": "2026-11-05T08:57:00-05:00",
+                "expires": "2026-11-05T11:00:00-05:00",
+                "ends": "2026-11-05T11:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Peachtree City GA",
+                "headline": "Flash Flood Warning issued November 5 at 8:57AM EST until November 5 at 11:00AM EST by NWS Peachtree City GA",
+                "description": "FFWFFC\n\nThe National Weather Service in Peachtree City has extended the\n\n* Flash Flood Warning for...\nNorth Central Fannin County in north central Georgia...\n\n* Until 1100 AM EST.\n\n* At 857 AM EST, emergency management reported significant flooding\nin and around McCaysville. No additional rainfall is expected, but\nflooding impacts will continue.\n\nFLASH FLOOD EMERGENCY for McCaysville. This is a PARTICULARLY\nDANGEROUS SITUATION. SEEK HIGHER GROUND NOW!\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Emergency management reported.\n\nIMPACT...This is a PARTICULARLY DANGEROUS SITUATION. SEEK HIGHER\nGROUND NOW! Life threatening flash flooding of low water\ncrossings, small creeks and streams, urban areas,\nhighways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nMcCaysville and nearby areas of North Central Fannin County.\n\nThis includes the following streams and drainages...\nHothouse Creek, Toccoa River, Ocoee River and Fightingtown Creek.",
+                "instruction": "Move to higher ground now! This is an extremely dangerous and\nlife-threatening situation. Do not attempt to travel unless you are\nfleeing an area subject to flooding or under an evacuation order.\n\nTurn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFFC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KFFC 051357"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD EMERGENCY FOR MCCAYSVILLE"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CATASTROPHIC"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KFFC.FF.W.0083.000000T0000Z-261105T1600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-05T11:00:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.e44db1e7d7472a942b102282b10fb60655c7cd3a.001.1,2026-11-05T05:08:00-05:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD EMERGENCY this area til 11:00 AM EST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD EMERGENCY is in effect for this area until 11:00 AM EST. This is an extremely dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-05T15:18:13+00:00"
+}
