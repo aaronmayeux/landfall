@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-11-14T14:17:53.979Z",
+  "runAt": "2026-11-15T11:14:10.742Z",
   "sources": {
     "btk": {
       "status": "ok",
@@ -49,12 +49,13 @@
       }
     },
     "jtwc": {
-      "status": "unavailable",
-      "storms": 0,
-      "linesAdded": 0,
-      "files": {},
-      "faults": [],
-      "reason": "relay reported state \"clear\""
+      "status": "ok",
+      "storms": 1,
+      "linesAdded": 1,
+      "files": {
+        "jtwc/2027/sh0427.jsonl": "+1"
+      },
+      "faults": []
     }
   }
 }
