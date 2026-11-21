@@ -1,0 +1,36 @@
+ABNT20 KNHC 051755
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+100 PM EST Thu Nov 5 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Western and Central Atlantic:
+A gale-force, non-tropical low pressure area located a few hundred 
+miles south of Bermuda is producing disorganized convection to the 
+north and east of its center. Environmental conditions could allow 
+this system to gradually acquire some subtropical characteristics 
+during the next couple of days or so while it moves slowly eastward 
+over the western and central subtropical Atlantic. By late this 
+weekend, upper-level winds are forecast to become unfavorable for 
+further development of this system. A new non-tropical low could 
+form to its east this weekend. Although environmental conditions are 
+unlikely to support significant subtropical or tropical development 
+of that system, gale-force winds are possible over parts of the 
+central subtropical Atlantic through the weekend. For more 
+information, including Gale Warnings, please see High Seas Forecasts 
+issued by the National Weather Service.
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Reinhart
+
+

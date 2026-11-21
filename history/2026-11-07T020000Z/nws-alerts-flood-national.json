@@ -1,0 +1,352 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.58d55b9dbeab9018ab3a037f7c64a6f686f4bf87.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -71.07,
+                            41.76
+                        ],
+                        [
+                            -70.93,
+                            41.81
+                        ],
+                        [
+                            -70.66,
+                            41.9
+                        ],
+                        [
+                            -70.53,
+                            41.84
+                        ],
+                        [
+                            -70.6,
+                            41.78
+                        ],
+                        [
+                            -70.63,
+                            41.77
+                        ],
+                        [
+                            -70.63,
+                            41.76
+                        ],
+                        [
+                            -70.62,
+                            41.77
+                        ],
+                        [
+                            -70.62,
+                            41.76
+                        ],
+                        [
+                            -70.61,
+                            41.77
+                        ],
+                        [
+                            -70.61,
+                            41.76
+                        ],
+                        [
+                            -70.79,
+                            41.6
+                        ],
+                        [
+                            -71.03,
+                            41.53
+                        ],
+                        [
+                            -71.07,
+                            41.76
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.58d55b9dbeab9018ab3a037f7c64a6f686f4bf87.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.58d55b9dbeab9018ab3a037f7c64a6f686f4bf87.001.1",
+                "areaDesc": "Bristol, MA; Plymouth, MA",
+                "geocode": {
+                    "SAME": [
+                        "025005",
+                        "025023"
+                    ],
+                    "UGC": [
+                        "MAC005",
+                        "MAC023"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MAC005",
+                    "https://api.weather.gov/zones/county/MAC023"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.56af79ec0319b4877e7f0316b98c2318805594ba.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.56af79ec0319b4877e7f0316b98c2318805594ba.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-06T20:54:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-06T21:14:00-05:00",
+                "effective": "2026-11-06T21:14:00-05:00",
+                "onset": "2026-11-06T21:14:00-05:00",
+                "expires": "2026-11-06T23:30:00-05:00",
+                "ends": "2026-11-06T23:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Boston/Norton MA",
+                "headline": "Flash Flood Warning issued November 6 at 9:14PM EST until November 6 at 11:30PM EST by NWS Boston/Norton MA",
+                "description": "At 914 PM EST, local law enforcement reported thunderstorms producing\nheavy rain which has led to numerous road closures across Acushnet\nand New Bedford. Between 1.5 and 2.5 inches of rain have fallen.\nAdditional rainfall amounts of 1 to 2.5 inches are possible in the\nwarned area. Flash flooding is already occurring.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Law enforcement reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nNew Bedford, Fall River, Plymouth, Dartmouth, Marion,\nMiddleborough, Wareham, Bourne, Fairhaven, Westport, Carver,\nLakeville, Acushnet, Freetown, Mattapoisett and Rochester.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nStay away or be swept away. River banks and culverts can become\nunstable and unsafe.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSBOX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KBOX 070214"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 1130 PM EST THIS EVENING FOR SOUTHEASTERN BRISTOL AND SOUTHERN PLYMOUTH COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KBOX.FF.W.0015.000000T0000Z-261107T0430Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-06T23:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.43030a40a0a16316036f0c137fb06af41a226bf0.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.54,
+                            34.55
+                        ],
+                        [
+                            -111.59,
+                            34.56
+                        ],
+                        [
+                            -111.64,
+                            34.52
+                        ],
+                        [
+                            -111.68,
+                            34.53
+                        ],
+                        [
+                            -111.7,
+                            34.53
+                        ],
+                        [
+                            -111.72,
+                            34.51
+                        ],
+                        [
+                            -111.75,
+                            34.51
+                        ],
+                        [
+                            -111.76,
+                            34.5
+                        ],
+                        [
+                            -111.77,
+                            34.51
+                        ],
+                        [
+                            -111.81,
+                            34.51
+                        ],
+                        [
+                            -111.83,
+                            34.5
+                        ],
+                        [
+                            -111.81,
+                            34.53
+                        ],
+                        [
+                            -111.74,
+                            34.52
+                        ],
+                        [
+                            -111.72,
+                            34.54
+                        ],
+                        [
+                            -111.64,
+                            34.54
+                        ],
+                        [
+                            -111.61,
+                            34.57
+                        ],
+                        [
+                            -111.54,
+                            34.57
+                        ],
+                        [
+                            -111.53,
+                            34.58
+                        ],
+                        [
+                            -111.52,
+                            34.57
+                        ],
+                        [
+                            -111.52,
+                            34.56
+                        ],
+                        [
+                            -111.54,
+                            34.55
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.43030a40a0a16316036f0c137fb06af41a226bf0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.43030a40a0a16316036f0c137fb06af41a226bf0.001.1",
+                "areaDesc": "Coconino, AZ; Yavapai, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004005",
+                        "004025"
+                    ],
+                    "UGC": [
+                        "AZC005",
+                        "AZC025"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC005",
+                    "https://api.weather.gov/zones/county/AZC025"
+                ],
+                "references": [],
+                "sent": "2026-11-06T17:22:00-07:00",
+                "effective": "2026-11-06T17:22:00-07:00",
+                "onset": "2026-11-06T17:22:00-07:00",
+                "expires": "2026-11-06T23:15:00-07:00",
+                "ends": "2026-11-06T23:15:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flash Flood Warning issued November 6 at 5:22PM MST until November 6 at 11:15PM MST by NWS Flagstaff AZ",
+                "description": "FFWFGZ\n\nThe National Weather Service in Flagstaff has issued a\n\n* Flash Flood Warning for...\nCoconino County in north central Arizona...\nYavapai County in west central Arizona...\n\n* Until 1115 PM MST.\n\n* At 522 PM MST, National Weather Service Flagstaff Doppler radar\nindicated heavy rainfall in the West Clear Creek drainage from\nearlier thunderstorms. Flash flooding is ongoing or expected to\nbegin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nnormally dry washes, urban areas, highways, streets and\nunderpasses.\n\n* Some locations that will experience flash flooding include...\nVerde Lakes, Hanging Garden, Indian Maiden Falls and West Clear\nCreek Wilderness.\n\nThis includes State Route 260 between mile markers 225 and 229.\n\nThis includes the following recreation areas and campgrounds...\nClear Creek Group Campgrounds.\n\nThis includes the following swimming holes...\nBull Pen Day Use Area, West Clear Creek near the campground and\nIndian Maiden Falls.\n\nThis includes the following creeks, washes and rivers...\nVerde River near the confluence of West Clear Creek and West Clear\nCreek.",
+                "instruction": "Flooding of washes and creeks will occur, some dirt roads will become\nmuddy and impassable. Paved roads and underpasses could become\nflooded as well.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KFGZ 070022"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGZ.FF.W.0218.261107T0022Z-261107T0615Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-06T23:15:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 11:15 PM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 11:15 PM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-07T02:37:05+00:00"
+}

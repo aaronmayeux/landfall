@@ -1,0 +1,22 @@
+en Español
+
+000
+ABPZ20 KNHC 100506
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1000 PM PST Mon Nov 9 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Pena, located several hundred miles south-southwest of 
+Honolulu, Hawaii.
+
+Tropical cyclone formation is not expected during the next 7 days.
+
+$$
+Forecaster Gibbs
+  

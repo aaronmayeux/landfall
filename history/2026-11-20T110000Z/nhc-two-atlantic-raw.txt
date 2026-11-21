@@ -1,0 +1,44 @@
+ABNT20 KNHC 200548
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+100 AM EST Fri Nov 20 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Offshore of the Southeast U.S. Coast:
+Surface observations indicate that a broad low pressure area has 
+formed over southeastern Florida, the northwestern Bahamas, and the 
+adjacent waters. The low is currently producing disorganized showers 
+and thunderstorms extending from the central Florida peninsula 
+east-southeastward over the Atlantic. This system could acquire 
+subtropical or tropical characteristics while it moves generally 
+northward to north-northeastward near or just offshore of the 
+southeastern United States coast through the weekend.
+
+Regardless of subtropical or tropical development, the system is 
+expected to produce strong, gusty winds, dangerous surf, rip 
+currents and coastal flooding along portions of the southeast and 
+mid-Atlantic U.S. coasts into early next week. In addition, heavy 
+rainfall and the threat of flash flooding will continue across 
+portions of the Florida peninsula today, potentially spreading 
+northward toward coastal portions of the Carolinas and the 
+mid-Atlantic over the weekend. Interests along the eastern coast of 
+the United States should continue to monitor the progress of this 
+system. Additional information on this system, including Gale 
+Warnings, can be found in High Seas Forecasts issued by the National 
+Weather Service, as well as products issued by your local National 
+Weather Service forecast office.
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Beven
+
+

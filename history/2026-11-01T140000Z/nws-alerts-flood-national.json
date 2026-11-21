@@ -1,0 +1,620 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.22c7f7b56a6a070da1df5b9e2a76eb82cc7bc0c0.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -88.1,
+                            34.84
+                        ],
+                        [
+                            -87.56,
+                            34.87
+                        ],
+                        [
+                            -87.57,
+                            34.65
+                        ],
+                        [
+                            -88.13,
+                            34.63
+                        ],
+                        [
+                            -88.12,
+                            34.71
+                        ],
+                        [
+                            -88.1,
+                            34.84
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.22c7f7b56a6a070da1df5b9e2a76eb82cc7bc0c0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.22c7f7b56a6a070da1df5b9e2a76eb82cc7bc0c0.001.1",
+                "areaDesc": "Colbert, AL; Lauderdale, AL",
+                "geocode": {
+                    "SAME": [
+                        "001033",
+                        "001077"
+                    ],
+                    "UGC": [
+                        "ALC033",
+                        "ALC077"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/ALC033",
+                    "https://api.weather.gov/zones/county/ALC077"
+                ],
+                "references": [],
+                "sent": "2026-11-01T08:52:00-06:00",
+                "effective": "2026-11-01T08:52:00-06:00",
+                "onset": "2026-11-01T08:52:00-06:00",
+                "expires": "2026-11-01T11:45:00-06:00",
+                "ends": "2026-11-01T11:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Huntsville AL",
+                "headline": "Flash Flood Warning issued November 1 at 8:52AM CST until November 1 at 11:45AM CST by NWS Huntsville AL",
+                "description": "FFWHUN\n\nThe National Weather Service in Huntsville has issued a\n\n* Flash Flood Warning for...\nColbert County in northwestern Alabama...\nSouth Central Lauderdale County in northwestern Alabama...\n\n* Until 1145 AM CST.\n\n* At 852 AM CST, Doppler radar indicated thunderstorms producing\nheavy rain between Florence and Cherokee. Between 4 and 5 inches of\nrain have fallen. The expected rainfall rate is 1 to 2 inches in 1\nhour. Additional rainfall amounts of 1 to 3 inches are possible in\nthe warned area. Flash flooding is already occurring.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFlorence, Muscle Shoals, Sheffield, Tuscumbia, Cherokee, St.\nFlorian, Pride Landing, Barton, Red Rock, Posey Loop, Oakland, New\nBethel, Colbert Heights, Mt Hester, Margerum, Mynot, Northwest\nAlabama Regional Airport, Malone and Allsboro.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KHUN 011452"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KHUN.FF.W.0035.261101T1452Z-261101T1745Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T11:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.958d2fe221898264f65fde7a33fd2c1f107a5042.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.84,
+                            30.32
+                        ],
+                        [
+                            -85.71,
+                            30.15
+                        ],
+                        [
+                            -85.59,
+                            30.16
+                        ],
+                        [
+                            -85.61,
+                            30.33
+                        ],
+                        [
+                            -85.71,
+                            30.44
+                        ],
+                        [
+                            -85.84,
+                            30.44
+                        ],
+                        [
+                            -85.84,
+                            30.32
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.958d2fe221898264f65fde7a33fd2c1f107a5042.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.958d2fe221898264f65fde7a33fd2c1f107a5042.001.1",
+                "areaDesc": "Bay, FL",
+                "geocode": {
+                    "SAME": [
+                        "012005"
+                    ],
+                    "UGC": [
+                        "FLC005"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC005"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9d3345663283f4816345c4f07b0a27ed1abcb217.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9d3345663283f4816345c4f07b0a27ed1abcb217.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T06:53:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0ea6bfeab58787a91de31ea3914d2f606cea57d9.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.0ea6bfeab58787a91de31ea3914d2f606cea57d9.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T08:00:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-01T09:36:00-05:00",
+                "effective": "2026-11-01T09:36:00-05:00",
+                "onset": "2026-11-01T09:36:00-05:00",
+                "expires": "2026-11-01T10:30:00-05:00",
+                "ends": "2026-11-01T10:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flash Flood Warning issued November 1 at 9:36AM EST until November 1 at 10:30AM EST by NWS Tallahassee FL",
+                "description": "FFWTAE\n\nThe National Weather Service in Tallahassee has extended the\n\n* Flash Flood Warning for...\nCentral Bay County in the panhandle of Florida...\n\n* Until 930 AM CST.\n\n* At 836 AM CST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 3 and 7 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPanama City, Lynn Haven, Springfield, Hiland Park, Vicksburg,\nSouthport, Dirego Park and Cedar Grove.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KTAE 011436"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KTAE.FF.W.0053.000000T0000Z-261101T1530Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T10:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a5d85e626ef1c3fdd1f7698962ada47def49f4a1.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.5,
+                            34
+                        ],
+                        [
+                            -111.5,
+                            34.01
+                        ],
+                        [
+                            -111.44,
+                            34.01
+                        ],
+                        [
+                            -111.68,
+                            33.73
+                        ],
+                        [
+                            -111.81,
+                            33.8
+                        ],
+                        [
+                            -111.67,
+                            34
+                        ],
+                        [
+                            -111.5,
+                            34
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a5d85e626ef1c3fdd1f7698962ada47def49f4a1.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a5d85e626ef1c3fdd1f7698962ada47def49f4a1.001.1",
+                "areaDesc": "Gila, AZ; Maricopa, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004007",
+                        "004013"
+                    ],
+                    "UGC": [
+                        "AZC007",
+                        "AZC013"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC007",
+                    "https://api.weather.gov/zones/county/AZC013"
+                ],
+                "references": [],
+                "sent": "2026-11-01T07:26:00-07:00",
+                "effective": "2026-11-01T07:26:00-07:00",
+                "onset": "2026-11-01T07:26:00-07:00",
+                "expires": "2026-11-01T10:30:00-07:00",
+                "ends": "2026-11-01T10:30:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Phoenix AZ",
+                "headline": "Flash Flood Warning issued November 1 at 7:26AM MST until November 1 at 10:30AM MST by NWS Phoenix AZ",
+                "description": "FFWPSR\n\nThe National Weather Service in Phoenix has issued a\n\n* Flash Flood Warning for...\nGila County in east central Arizona...\nMaricopa County in south central Arizona...\n\n* Until 1030 AM MST.\n\n* At 726 AM MST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 0.5 and 1 inch of rain\nhas fallen. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nRio Verde.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nIn hilly terrain there are hundreds of low water crossings which are\npotentially dangerous in heavy rain. Do not attempt to cross flooded\nroads. Find an alternate route.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWPSR"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KPSR 011426"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPSR.FF.W.0093.261101T1426Z-261101T1730Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T10:30:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 10:30 AM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 10:30 AM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fbc3e0cb14522aec5093d8f8ed00666819ada2f7.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.7,
+                            30.15
+                        ],
+                        [
+                            -85.71,
+                            30.18
+                        ],
+                        [
+                            -85.71,
+                            30.19
+                        ],
+                        [
+                            -85.65,
+                            30.2
+                        ],
+                        [
+                            -85.59,
+                            30.19
+                        ],
+                        [
+                            -85.59,
+                            30.17
+                        ],
+                        [
+                            -85.64,
+                            30.13
+                        ],
+                        [
+                            -85.7,
+                            30.15
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fbc3e0cb14522aec5093d8f8ed00666819ada2f7.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.fbc3e0cb14522aec5093d8f8ed00666819ada2f7.001.1",
+                "areaDesc": "Bay, FL",
+                "geocode": {
+                    "SAME": [
+                        "012005"
+                    ],
+                    "UGC": [
+                        "FLC005"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC005"
+                ],
+                "references": [],
+                "sent": "2026-11-01T09:15:00-05:00",
+                "effective": "2026-11-01T09:15:00-05:00",
+                "onset": "2026-11-01T09:15:00-05:00",
+                "expires": "2026-11-01T11:15:00-05:00",
+                "ends": "2026-11-01T11:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flash Flood Warning issued November 1 at 9:15AM EST until November 1 at 11:15AM EST by NWS Tallahassee FL",
+                "description": "FFWTAE\n\nThe National Weather Service in Tallahassee has issued a\n\n* Flash Flood Warning for...\nCentral Bay County in the panhandle of Florida...\n\n* Until 1015 AM CST.\n\n* At 815 AM CST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 5 and 8 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Life threatening flash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nPanama City, Springfield, Dirego Park, Millville and Cedar Grove.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KTAE 011415"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTAE.FF.W.0054.261101T1415Z-261101T1615Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T11:15:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 11:15 AM EST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 11:15 AM EST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.23f9a31ed2efeb1de909ceb100e76d15a991fdca.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -92.67,
+                            30.17
+                        ],
+                        [
+                            -92.67,
+                            30.34
+                        ],
+                        [
+                            -92.55,
+                            30.34
+                        ],
+                        [
+                            -92.55,
+                            30.15
+                        ],
+                        [
+                            -92.66,
+                            30.15
+                        ],
+                        [
+                            -92.67,
+                            30.17
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.23f9a31ed2efeb1de909ceb100e76d15a991fdca.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.23f9a31ed2efeb1de909ceb100e76d15a991fdca.001.1",
+                "areaDesc": "Acadia, LA; Jefferson Davis, LA",
+                "geocode": {
+                    "SAME": [
+                        "022001",
+                        "022053"
+                    ],
+                    "UGC": [
+                        "LAC001",
+                        "LAC053"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/LAC001",
+                    "https://api.weather.gov/zones/county/LAC053"
+                ],
+                "references": [],
+                "sent": "2026-11-01T06:34:00-06:00",
+                "effective": "2026-11-01T06:34:00-06:00",
+                "onset": "2026-11-01T06:34:00-06:00",
+                "expires": "2026-11-01T09:30:00-06:00",
+                "ends": "2026-11-01T09:30:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Lake Charles LA",
+                "headline": "Flash Flood Warning issued November 1 at 6:34AM CST until November 1 at 9:30AM CST by NWS Lake Charles LA",
+                "description": "FFWLCH\n\nThe National Weather Service in Lake Charles has issued a\n\n* Flash Flood Warning for...\nWest Central Acadia Parish in southwestern Louisiana...\nEast Central Jefferson Davis Parish in southwestern Louisiana...\n\n* Until 930 AM CST.\n\n* At 634 AM CST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 3 and 5 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nJennings, Mermentau and Evangeline.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLCH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLCH 011234"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLCH.FF.W.0077.261101T1234Z-261101T1530Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-01T09:30:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-01T14:55:32+00:00"
+}

@@ -1,0 +1,148 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5031086e93ddbd67ff9105f0fdd484bb2fb3b2e2.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.45,
+                            27.87
+                        ],
+                        [
+                            -80.46,
+                            27.85
+                        ],
+                        [
+                            -80.45,
+                            27.86
+                        ],
+                        [
+                            -80.44,
+                            27.88
+                        ],
+                        [
+                            -80.37,
+                            27.77
+                        ],
+                        [
+                            -80.36,
+                            27.75
+                        ],
+                        [
+                            -80.34,
+                            27.71
+                        ],
+                        [
+                            -80.51,
+                            27.57
+                        ],
+                        [
+                            -80.6,
+                            27.57
+                        ],
+                        [
+                            -80.62,
+                            27.82
+                        ],
+                        [
+                            -80.5,
+                            27.81
+                        ],
+                        [
+                            -80.45,
+                            27.87
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5031086e93ddbd67ff9105f0fdd484bb2fb3b2e2.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5031086e93ddbd67ff9105f0fdd484bb2fb3b2e2.001.1",
+                "areaDesc": "Indian River, FL",
+                "geocode": {
+                    "SAME": [
+                        "012061"
+                    ],
+                    "UGC": [
+                        "FLC061"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC061"
+                ],
+                "references": [],
+                "sent": "2026-11-19T21:09:00-05:00",
+                "effective": "2026-11-19T21:09:00-05:00",
+                "onset": "2026-11-19T21:09:00-05:00",
+                "expires": "2026-11-19T23:15:00-05:00",
+                "ends": "2026-11-19T23:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flash Flood Warning issued November 19 at 9:09PM EST until November 19 at 11:15PM EST by NWS Melbourne FL",
+                "description": "FFWMLB\n\nThe National Weather Service in Melbourne has issued a\n\n* Flash Flood Warning for...\nEastern Indian River County in east central Florida...\n\n* Until 1115 PM EST.\n\n* At 909 PM EST, emergency management reported flooding is occurring\non multiple roadways in Sebastian. Up to 1.5 inches of rain have\nfallen. Additional rainfall amounts up to 1.5 inches are possible\nin the warned area over the next hour and a half. Flash flooding is\nalready occurring.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Emergency management reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nSebastian, Vero Beach, Fellsmere, Indian River Shores, Wabasso,\nSebastian Highlands, Winter Beach, Gifford, Roseland, Vero Beach\nSouth, Sebastian Inlet, Vero Lake Estates, Pointe West, Sebastian\nInlet State Park, Orchid, Vero Beach Airport, Wabasso Beach,\nDisneys Vero Beach Resort and North Beach.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMLB 200209"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMLB.FF.W.0032.261120T0209Z-261120T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-19T23:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-20T02:56:10+00:00"
+}

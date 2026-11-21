@@ -1,0 +1,1083 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.39e48bfa9f531d07f4b0ba1a7d1f2b72b6af2f13.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -105.97,
+                            37.59
+                        ],
+                        [
+                            -105.89,
+                            37.54
+                        ],
+                        [
+                            -105.82,
+                            37.49
+                        ],
+                        [
+                            -105.86,
+                            37.42
+                        ],
+                        [
+                            -105.93,
+                            37.47
+                        ],
+                        [
+                            -106.01,
+                            37.52
+                        ],
+                        [
+                            -105.97,
+                            37.59
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.39e48bfa9f531d07f4b0ba1a7d1f2b72b6af2f13.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.39e48bfa9f531d07f4b0ba1a7d1f2b72b6af2f13.001.1",
+                "areaDesc": "Alamosa  Vicinity/Central San Luis Valley Below 8500 Ft",
+                "geocode": {
+                    "SAME": [
+                        "008003",
+                        "008105"
+                    ],
+                    "UGC": [
+                        "COZ070"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/COZ070"
+                ],
+                "references": [],
+                "sent": "2026-11-02T07:21:00-07:00",
+                "effective": "2026-11-02T07:21:00-07:00",
+                "onset": "2026-11-04T14:20:00-07:00",
+                "expires": "2026-11-02T15:30:00-07:00",
+                "ends": "2026-11-05T23:45:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pueblo CO",
+                "headline": "Flood Watch issued November 2 at 7:21AM MST until November 5 at 11:45PM MST by NWS Pueblo CO",
+                "description": "...The Flood Watch continues for the following rivers in Colorado...\n\nRio Grande At Alamosa affecting Alamosa Vicinity/Central San Luis\nValley.\n\nFor the Rio Grande...including Alamosa...flooding is forecasted to\nbegin by mid week.\n\n* WHAT...Flooding is possible.\n\n* WHERE...Rio Grande at Alamosa.\n\n* WHEN...From Wednesday afternoon to Thursday evening.\n\n* ADDITIONAL DETAILS...\n- At 6:30 AM MST Monday the stage was 3.0 feet.\n- Forecast...Flood stage may be reached early Wednesday afternoon.\n- Flood stage is 9.0 feet.\n- http://www.weather.gov/safety/flood",
+                "instruction": "If you are in the watch area, remain alert to possible flooding.\n\nResidents and those with interests near the river should monitor\nrising water levels and be prepared for possible Flood Warnings.\n\nAdditional information is available at www.weather.gov.\n\nThe next statement will be issued this afternoon at 330 PM MST.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPUB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KPUB 021421"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH NOW IN EFFECT FROM WEDNESDAY AFTERNOON TO THURSDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KPUB.FL.A.0002.261104T2120Z-261106T0645Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-05T23:45:00-07:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.a3cd340f9b1b099614785410803556c44c7ca26c.001.1,2026-11-01T19:09:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.2dd215e378eb08e478cfc3dafdca53426c0e3e44.001.1,2026-11-01T08:12:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FLA"
+                    ],
+                    "NationalWeatherService": [
+                        "FLA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.759d07f2ac30dcd3a1e31784372cbf4cef34add1.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.759d07f2ac30dcd3a1e31784372cbf4cef34add1.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.759d07f2ac30dcd3a1e31784372cbf4cef34add1.002.1",
+                "areaDesc": "Highlands",
+                "geocode": {
+                    "SAME": [
+                        "012055"
+                    ],
+                    "UGC": [
+                        "FLZ057"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ057"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fd2001dfdc48dc68b96b62c5bfb22550329b166a.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.fd2001dfdc48dc68b96b62c5bfb22550329b166a.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T12:58:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-02T08:15:00-05:00",
+                "effective": "2026-11-02T08:15:00-05:00",
+                "onset": "2026-11-02T08:15:00-05:00",
+                "expires": "2026-11-02T15:00:00-05:00",
+                "ends": "2026-11-02T15:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tampa Bay Ruskin FL",
+                "headline": "Flood Watch issued November 2 at 8:15AM EST until November 2 at 3:00PM EST by NWS Tampa Bay Ruskin FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of west central Florida, including the following\ncounty, Highlands.\n\n* WHEN...Until 3 PM EST this afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Additional rainfall is expected throughout the morning and early\nafternoon.\n- https://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATBW"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KTBW 021315"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 3 PM EST THIS AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTBW.FA.A.0003.000000T0000Z-261102T2000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T15:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.759d07f2ac30dcd3a1e31784372cbf4cef34add1.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.759d07f2ac30dcd3a1e31784372cbf4cef34add1.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.759d07f2ac30dcd3a1e31784372cbf4cef34add1.001.1",
+                "areaDesc": "Polk; Hardee; DeSoto",
+                "geocode": {
+                    "SAME": [
+                        "012105",
+                        "012049",
+                        "012027"
+                    ],
+                    "UGC": [
+                        "FLZ052",
+                        "FLZ056",
+                        "FLZ061"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ052",
+                    "https://api.weather.gov/zones/forecast/FLZ056",
+                    "https://api.weather.gov/zones/forecast/FLZ061"
+                ],
+                "references": [],
+                "sent": "2026-11-02T08:15:00-05:00",
+                "effective": "2026-11-02T08:15:00-05:00",
+                "onset": "2026-11-02T08:15:00-05:00",
+                "expires": "2026-11-02T15:00:00-05:00",
+                "ends": "2026-11-02T15:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tampa Bay Ruskin FL",
+                "headline": "Flood Watch issued November 2 at 8:15AM EST until November 2 at 3:00PM EST by NWS Tampa Bay Ruskin FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of west central Florida, including the following\ncounties, DeSoto, Hardee and Polk.\n\n* WHEN...Until 3 PM EST this afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Additional rainfall is expected throughout the morning and early\nafternoon.\n- https://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATBW"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KTBW 021315"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT UNTIL 3 PM EST THIS AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXA.KTBW.FA.A.0003.000000T0000Z-261102T2000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T15:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a6499198bfeb3e5888538271cdeb42f7320e5f04.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a6499198bfeb3e5888538271cdeb42f7320e5f04.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a6499198bfeb3e5888538271cdeb42f7320e5f04.002.1",
+                "areaDesc": "Del Norte Vicinity/Northern San Luis Valley Below 8500 Ft; Alamosa  Vicinity/Central San Luis Valley Below 8500 Ft; Southern San Luis Valley",
+                "geocode": {
+                    "SAME": [
+                        "008105",
+                        "008109",
+                        "008003",
+                        "008021",
+                        "008023"
+                    ],
+                    "UGC": [
+                        "COZ069",
+                        "COZ070",
+                        "COZ071"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/COZ069",
+                    "https://api.weather.gov/zones/forecast/COZ070",
+                    "https://api.weather.gov/zones/forecast/COZ071"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.80bf239e14939301bab75a31b1bf46d6ec9e29a9.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.80bf239e14939301bab75a31b1bf46d6ec9e29a9.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T22:36:00-07:00"
+                    }
+                ],
+                "sent": "2026-11-02T06:14:00-07:00",
+                "effective": "2026-11-02T06:14:00-07:00",
+                "onset": "2026-11-02T06:14:00-07:00",
+                "expires": "2026-11-02T14:15:00-07:00",
+                "ends": "2026-11-04T05:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pueblo CO",
+                "headline": "Flood Watch issued November 2 at 6:14AM MST until November 4 at 5:00AM MST by NWS Pueblo CO",
+                "description": "* WHAT...Flooding caused by excessive rainfall will be possible,\nespecially over the western half of San Luis Valley.\n\n* WHERE...The western half of the San Luis Valley, including\nAntonito, Del Norte, Monte Vista and Alamosa.\n\n* WHEN...Through late Tuesday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone location.\n\n* ADDITIONAL DETAILS...\n- Runoff from heavy rain and melting snow over the San Juan\nMountains may cause flooding in the San Luis Valley, especially\nMonday and Tuesday as high flows move out of the mountains and\nthrough the Rio Grande and Conejos River.\n- The greatest risk of flooding will be along the Conejos River and\nthe Rio Grande, including Del Norte, Monte Vista and Alamosa.\n- http://www.weather.gov/safety/flood http://cotrip.org",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPUB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KPUB 021314"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH LATE TUESDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPUB.FA.A.0010.000000T0000Z-261104T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-04T05:00:00-07:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6452f67ccada8c80a213b32735fb106e5b65d3ae.002.1,2026-11-01T13:50:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.089a310d5f6b73825563e3a8cfaf9f90b6b00b53.002.1,2026-11-01T05:57:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.928785af67df25edfd60d6c08af371547045920b.002.1,2026-10-31T21:18:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.a86d832769b4b479ba2fd2815cb3755bcf6b1d9a.002.1,2026-10-31T13:59:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.c43837866a64e434d490f547f232ecfdd4c91f85.002.1,2026-10-31T05:48:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.7a417fb6a16d2e5289cf68a168b50004887c2f76.002.1,2026-10-30T18:46:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6c702f44556c2240320a73dcc302b9a6b4962366.001.1,2026-10-30T11:29:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a6499198bfeb3e5888538271cdeb42f7320e5f04.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a6499198bfeb3e5888538271cdeb42f7320e5f04.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a6499198bfeb3e5888538271cdeb42f7320e5f04.001.1",
+                "areaDesc": "Upper Rio Grande Valley/Eastern San Juan Mountains Below 10000 Ft; Eastern San Juan Mountains Above 10000 Ft",
+                "geocode": {
+                    "SAME": [
+                        "008021",
+                        "008079",
+                        "008105"
+                    ],
+                    "UGC": [
+                        "COZ067",
+                        "COZ068"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/COZ067",
+                    "https://api.weather.gov/zones/forecast/COZ068"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.80bf239e14939301bab75a31b1bf46d6ec9e29a9.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.80bf239e14939301bab75a31b1bf46d6ec9e29a9.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T22:36:00-07:00"
+                    }
+                ],
+                "sent": "2026-11-02T06:14:00-07:00",
+                "effective": "2026-11-02T06:14:00-07:00",
+                "onset": "2026-11-02T06:14:00-07:00",
+                "expires": "2026-11-02T11:00:00-07:00",
+                "ends": "2026-11-02T11:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pueblo CO",
+                "headline": "Flood Watch issued November 2 at 6:14AM MST until November 2 at 11:00AM MST by NWS Pueblo CO",
+                "description": "* WHAT...Flooding caused by excessive rainfall is expected to occur.\n\n* WHERE...Eastern San Juan Mountains Above 10000 Feet, Upper Rio\nGrande Valley and Eastern San Juan Mountains Below 10000 Feet.\n\n* WHEN...Until 11 AM MST this morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone location. .\n\n* ADDITIONAL DETAILS...\n- Heavy rainfall Sunday has caused rivers to flood across the\nregion. High water is expected to occur through the next couple\nof days.\n- The greatest risk of flooding will be along the Conejos River and\nthe South Fork of the Rio Grande, including South Fork and\nMogote.\n- http://www.weather.gov/safety/flood http://cotrip.org",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPUB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KPUB 021314"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 11 AM MST THIS MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPUB.FA.A.0010.000000T0000Z-261102T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T11:00:00-07:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6452f67ccada8c80a213b32735fb106e5b65d3ae.001.1,2026-11-01T13:50:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.089a310d5f6b73825563e3a8cfaf9f90b6b00b53.001.1,2026-11-01T05:57:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.928785af67df25edfd60d6c08af371547045920b.001.1,2026-10-31T21:18:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.a86d832769b4b479ba2fd2815cb3755bcf6b1d9a.001.1,2026-10-31T13:59:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.c43837866a64e434d490f547f232ecfdd4c91f85.001.1,2026-10-31T05:48:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.7a417fb6a16d2e5289cf68a168b50004887c2f76.001.1,2026-10-30T18:46:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6c702f44556c2240320a73dcc302b9a6b4962366.002.1,2026-10-30T11:29:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.be86213ea43caaecbae8a1165b6419e7acbfba4d.001.1,2026-10-30T08:22:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.c1498762d99a824314548150bf7f16de768bebbe.001.1,2026-10-30T00:19:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f1de3bcee59a3911bd7c81831b16e6053be8440f.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f1de3bcee59a3911bd7c81831b16e6053be8440f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f1de3bcee59a3911bd7c81831b16e6053be8440f.001.1",
+                "areaDesc": "Northwest Plateau; Chuska Mountains; Far Northwest Highlands; Northwest Highlands; West Central Plateau; West Central Mountains; West Central Highlands; Southwest Mountains; San Francisco River Valley; Tusas Mountains Including Chama; Jemez Mountains",
+                "geocode": {
+                    "SAME": [
+                        "035031",
+                        "035045",
+                        "035039",
+                        "035043",
+                        "035003",
+                        "035006",
+                        "035053",
+                        "035001",
+                        "035061",
+                        "035055",
+                        "035028"
+                    ],
+                    "UGC": [
+                        "NMZ201",
+                        "NMZ202",
+                        "NMZ203",
+                        "NMZ204",
+                        "NMZ205",
+                        "NMZ206",
+                        "NMZ207",
+                        "NMZ208",
+                        "NMZ209",
+                        "NMZ210",
+                        "NMZ211"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NMZ201",
+                    "https://api.weather.gov/zones/forecast/NMZ202",
+                    "https://api.weather.gov/zones/forecast/NMZ203",
+                    "https://api.weather.gov/zones/forecast/NMZ204",
+                    "https://api.weather.gov/zones/forecast/NMZ205",
+                    "https://api.weather.gov/zones/forecast/NMZ206",
+                    "https://api.weather.gov/zones/forecast/NMZ207",
+                    "https://api.weather.gov/zones/forecast/NMZ208",
+                    "https://api.weather.gov/zones/forecast/NMZ209",
+                    "https://api.weather.gov/zones/forecast/NMZ210",
+                    "https://api.weather.gov/zones/forecast/NMZ211"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.128a15ce2d6c00007ef1cef2fc8efca91bc545a1.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.128a15ce2d6c00007ef1cef2fc8efca91bc545a1.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T14:09:00-07:00"
+                    }
+                ],
+                "sent": "2026-11-02T00:54:00-07:00",
+                "effective": "2026-11-02T00:54:00-07:00",
+                "onset": "2026-11-02T00:54:00-07:00",
+                "expires": "2026-11-02T11:00:00-07:00",
+                "ends": "2026-11-02T11:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flood Watch issued November 2 at 12:54AM MST until November 2 at 11:00AM MST by NWS Albuquerque NM",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of north central, northwest, and west central New\nMexico, including the following areas, in north central New Mexico,\nFar Northwest Highlands, Jemez Mountains, Northwest Highlands and\nTusas Mountains Including Chama. In northwest New Mexico, Chuska\nMountains and Northwest Plateau. In west central New Mexico, San\nFrancisco River Valley, Southwest Mountains, West Central\nHighlands, West Central Mountains and West Central Plateau.\n\n* WHEN...Until 11 AM MST this morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nCreeks and streams may rise out of their banks. Flooding may occur\nin poor drainage and urban areas. Low-water crossings may be\nflooded.\n\n* ADDITIONAL DETAILS...\n- Another round of widespread rainfall continues this morning with\ntotal rainfall amounts generally between 1 and 2 inches near and\nwest of the Continental Divide, except near 3 inches in favored\nupslope regions of the Tusas Mountains near Chama and in the\nChuska Mountains. This rainfall is occurring over very saturated\nsoils which will increase runoff. River flooding may continue\ninto Tuesday.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KABQ 020754"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 11 AM MST THIS MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FA.A.0029.000000T0000Z-261102T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T11:00:00-07:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.84f8b1fc6154b966948f83a465542420d92ff2db.001.1,2026-11-01T06:13:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.027873e3c12fea91c7d405fadbdbdfbc13bf6cab.001.1,2026-11-01T00:08:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.aaf78eb5663dc07b2dc1c64b89bbf27f955ce8c2.001.1,2026-10-31T11:53:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.022f71c1f84e33a599206887ec31111fd4d7ac36.001.1,2026-10-31T01:38:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.1ca77e37ea3074a8ac800862d072f0e118211895.001.1,2026-10-30T11:50:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.0eefbe1b9a9089c140dc0ea316b8d8b7d6e440db.001.1,2026-10-30T00:31:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4f07e60623d00938b46403a238fbab7e9c79145a.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4f07e60623d00938b46403a238fbab7e9c79145a.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4f07e60623d00938b46403a238fbab7e9c79145a.001.1",
+                "areaDesc": "Coastal Collier County; Inland Collier County; Mainland Monroe",
+                "geocode": {
+                    "SAME": [
+                        "012021",
+                        "012087"
+                    ],
+                    "UGC": [
+                        "FLZ069",
+                        "FLZ070",
+                        "FLZ075"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ069",
+                    "https://api.weather.gov/zones/forecast/FLZ070",
+                    "https://api.weather.gov/zones/forecast/FLZ075"
+                ],
+                "references": [],
+                "sent": "2026-11-01T23:59:00-05:00",
+                "effective": "2026-11-01T23:59:00-05:00",
+                "onset": "2026-11-01T23:59:00-05:00",
+                "expires": "2026-11-02T19:00:00-05:00",
+                "ends": "2026-11-02T19:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flood Watch issued November 1 at 11:59PM EST until November 2 at 7:00PM EST by NWS Miami FL",
+                "description": "An upper level low will will continue to influence storms in the\nGulf and Bahamas through Monday. With the lack of a strong synoptic\nsurface forcing mechanism, predictability as to where and when heavy\nrain will fall remains low. However, the environment continues to\nsupport the potential for heavy rainfall and slow moving cells.\n\n* WHAT...Heavy rain may cause, or worsen ongoing urban and street\nflooding.\n\n* WHERE...All of South Florida\n\n* WHEN...Through Monday evening.\n\n* IMPACTS...Isolated to scattered areas of flash flooding will be\npossible, with the main impact being street flooding, road\nclosures, and limited impact to structures in flood prone areas.\n\n* ADDITIONAL DETAILS...\n- Pockets of very heavy rainfall resulted in localized flash\nflooding on Sunday and those areas, and others, have the\npotential to be impacted again on Monday. Forecast amounts look\nvery similar to yesterday, with common amounts of 1 to 3 inches\nwhere showers and storms occur. Scattered locations around south\nFlorida may see closer to 3 to 5 inches of rain. The more\nisolated high end amounts have the potential to peak around 6 to\n9 inches. These amounts could accumulate rather quickly, on the\norder of 2 to 4 hours.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMFL 020459"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT THROUGH MONDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXB.KMFL.FA.A.0002.000000T0000Z-261103T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T19:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4f07e60623d00938b46403a238fbab7e9c79145a.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4f07e60623d00938b46403a238fbab7e9c79145a.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4f07e60623d00938b46403a238fbab7e9c79145a.002.1",
+                "areaDesc": "Glades; Hendry; Inland Palm Beach County; Metro Palm Beach County; Inland Broward County; Metro Broward County; Inland Miami-Dade County; Metropolitan Miami Dade; Coastal Palm Beach County; Coastal Broward County; Coastal Miami Dade County; Far South Miami-Dade County",
+                "geocode": {
+                    "SAME": [
+                        "012043",
+                        "012051",
+                        "012099",
+                        "012011",
+                        "012086"
+                    ],
+                    "UGC": [
+                        "FLZ063",
+                        "FLZ066",
+                        "FLZ067",
+                        "FLZ068",
+                        "FLZ071",
+                        "FLZ072",
+                        "FLZ073",
+                        "FLZ074",
+                        "FLZ168",
+                        "FLZ172",
+                        "FLZ173",
+                        "FLZ174"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ063",
+                    "https://api.weather.gov/zones/forecast/FLZ066",
+                    "https://api.weather.gov/zones/forecast/FLZ067",
+                    "https://api.weather.gov/zones/forecast/FLZ068",
+                    "https://api.weather.gov/zones/forecast/FLZ071",
+                    "https://api.weather.gov/zones/forecast/FLZ072",
+                    "https://api.weather.gov/zones/forecast/FLZ073",
+                    "https://api.weather.gov/zones/forecast/FLZ074",
+                    "https://api.weather.gov/zones/forecast/FLZ168",
+                    "https://api.weather.gov/zones/forecast/FLZ172",
+                    "https://api.weather.gov/zones/forecast/FLZ173",
+                    "https://api.weather.gov/zones/forecast/FLZ174"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1df7ace1109595b6e55fe7e70ea87168365d4127.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.1df7ace1109595b6e55fe7e70ea87168365d4127.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T12:49:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1df7ace1109595b6e55fe7e70ea87168365d4127.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.1df7ace1109595b6e55fe7e70ea87168365d4127.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T12:49:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-01T23:59:00-05:00",
+                "effective": "2026-11-01T23:59:00-05:00",
+                "onset": "2026-11-01T23:59:00-05:00",
+                "expires": "2026-11-02T19:00:00-05:00",
+                "ends": "2026-11-02T19:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flood Watch issued November 1 at 11:59PM EST until November 2 at 7:00PM EST by NWS Miami FL",
+                "description": "An upper level low will will continue to influence storms in the\nGulf and Bahamas through Monday. With the lack of a strong synoptic\nsurface forcing mechanism, predictability as to where and when heavy\nrain will fall remains low. However, the environment continues to\nsupport the potential for heavy rainfall and slow moving cells.\n\n* WHAT...Heavy rain may cause, or worsen ongoing urban and street\nflooding.\n\n* WHERE...All of South Florida\n\n* WHEN...Through Monday evening.\n\n* IMPACTS...Isolated to scattered areas of flash flooding will be\npossible, with the main impact being street flooding, road\nclosures, and limited impact to structures in flood prone areas.\n\n* ADDITIONAL DETAILS...\n- Pockets of very heavy rainfall resulted in localized flash\nflooding on Sunday and those areas, and others, have the\npotential to be impacted again on Monday. Forecast amounts look\nvery similar to yesterday, with common amounts of 1 to 3 inches\nwhere showers and storms occur. Scattered locations around south\nFlorida may see closer to 3 to 5 inches of rain. The more\nisolated high end amounts have the potential to peak around 6 to\n9 inches. These amounts could accumulate rather quickly, on the\norder of 2 to 4 hours.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMFL 020459"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH NOW IN EFFECT THROUGH MONDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KMFL.FA.A.0002.000000T0000Z-261103T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T19:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.d8c232d5c25def9626b9b06da8dc57aec8c761ef.001.1,2026-11-01T00:43:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c2c270961ae506c66262159e4946611664f737ea.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c2c270961ae506c66262159e4946611664f737ea.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.c2c270961ae506c66262159e4946611664f737ea.001.1",
+                "areaDesc": "Inland Volusia; Northern Lake County; Orange; Seminole; Osceola; Okeechobee; Coastal Volusia; Southern Lake County; Coastal Indian River; Coastal St. Lucie; Coastal Martin; Inland Northern Brevard; Inland Indian River; Inland St. Lucie; Inland Martin; Mainland Northern Brevard; Northern Brevard Barrier Islands; Inland Southern Brevard; Mainland Southern Brevard; Southern Brevard Barrier Islands",
+                "geocode": {
+                    "SAME": [
+                        "012127",
+                        "012069",
+                        "012095",
+                        "012117",
+                        "012097",
+                        "012093",
+                        "012061",
+                        "012111",
+                        "012085",
+                        "012009"
+                    ],
+                    "UGC": [
+                        "FLZ041",
+                        "FLZ044",
+                        "FLZ045",
+                        "FLZ046",
+                        "FLZ053",
+                        "FLZ058",
+                        "FLZ141",
+                        "FLZ144",
+                        "FLZ154",
+                        "FLZ159",
+                        "FLZ164",
+                        "FLZ247",
+                        "FLZ254",
+                        "FLZ259",
+                        "FLZ264",
+                        "FLZ347",
+                        "FLZ447",
+                        "FLZ547",
+                        "FLZ647",
+                        "FLZ747"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ041",
+                    "https://api.weather.gov/zones/forecast/FLZ044",
+                    "https://api.weather.gov/zones/forecast/FLZ045",
+                    "https://api.weather.gov/zones/forecast/FLZ046",
+                    "https://api.weather.gov/zones/forecast/FLZ053",
+                    "https://api.weather.gov/zones/forecast/FLZ058",
+                    "https://api.weather.gov/zones/forecast/FLZ141",
+                    "https://api.weather.gov/zones/forecast/FLZ144",
+                    "https://api.weather.gov/zones/forecast/FLZ154",
+                    "https://api.weather.gov/zones/forecast/FLZ159",
+                    "https://api.weather.gov/zones/forecast/FLZ164",
+                    "https://api.weather.gov/zones/forecast/FLZ247",
+                    "https://api.weather.gov/zones/forecast/FLZ254",
+                    "https://api.weather.gov/zones/forecast/FLZ259",
+                    "https://api.weather.gov/zones/forecast/FLZ264",
+                    "https://api.weather.gov/zones/forecast/FLZ347",
+                    "https://api.weather.gov/zones/forecast/FLZ447",
+                    "https://api.weather.gov/zones/forecast/FLZ547",
+                    "https://api.weather.gov/zones/forecast/FLZ647",
+                    "https://api.weather.gov/zones/forecast/FLZ747"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.108559cb19ecfde4fa3e804589e3e1cdbacac774.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.108559cb19ecfde4fa3e804589e3e1cdbacac774.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-31T23:41:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.eb8f23614741a837397c515901b2b5b3016d0312.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.eb8f23614741a837397c515901b2b5b3016d0312.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T12:39:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.eb8f23614741a837397c515901b2b5b3016d0312.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.eb8f23614741a837397c515901b2b5b3016d0312.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T12:39:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.027872c2b571a05c79f39a2acfa2e3383f77b459.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.027872c2b571a05c79f39a2acfa2e3383f77b459.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T20:06:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.027872c2b571a05c79f39a2acfa2e3383f77b459.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.027872c2b571a05c79f39a2acfa2e3383f77b459.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T20:06:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-01T23:09:00-05:00",
+                "effective": "2026-11-01T23:09:00-05:00",
+                "onset": "2026-11-01T23:09:00-05:00",
+                "expires": "2026-11-02T19:00:00-05:00",
+                "ends": "2026-11-02T19:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flood Watch issued November 1 at 11:09PM EST until November 2 at 7:00PM EST by NWS Melbourne FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of east central Florida, including the following\nareas, Coastal Indian River, Coastal Martin, Coastal Saint Lucie,\nCoastal Volusia, Inland Indian River, Inland Martin, Inland\nNorthern Brevard, Inland Saint Lucie, Inland Southern Brevard,\nInland Volusia, Mainland Northern Brevard, Mainland Southern\nBrevard, Northern Brevard Barrier Islands, Northern Lake,\nOkeechobee, Orange, Osceola, Seminole, Southern Brevard Barrier\nIslands and Southern Lake.\n\n* WHEN...Through Monday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- A disturbance is interacting with unusually rich moisture over\nportions of Central Florida, causing bands of heavy rain that\nwill continue overnight. The ground is nearly saturated.\nWidespread amounts of 1-3 inches are forecast, with localized\namounts of 5-7 inches or more which may cause flash flooding.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMLB 020409"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH NOW IN EFFECT THROUGH MONDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KMLB.FA.A.0003.000000T0000Z-261103T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T19:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.28dceea107844d87e801d5ba537294d1bcbe9f7e.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.28dceea107844d87e801d5ba537294d1bcbe9f7e.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.28dceea107844d87e801d5ba537294d1bcbe9f7e.001.1",
+                "areaDesc": "Southwest San Juan Mountains; Four Corners/Upper Dolores River; Animas River Basin; San Juan River Basin; Southeast Utah; La Sal and Abajo Mountains; Canyonlands/Natural Bridges",
+                "geocode": {
+                    "SAME": [
+                        "008007",
+                        "008033",
+                        "008053",
+                        "008067",
+                        "008083",
+                        "008111",
+                        "008113",
+                        "049037",
+                        "049019"
+                    ],
+                    "UGC": [
+                        "COZ019",
+                        "COZ021",
+                        "COZ022",
+                        "COZ023",
+                        "UTZ022",
+                        "UTZ028",
+                        "UTZ029"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/COZ019",
+                    "https://api.weather.gov/zones/forecast/COZ021",
+                    "https://api.weather.gov/zones/forecast/COZ022",
+                    "https://api.weather.gov/zones/forecast/COZ023",
+                    "https://api.weather.gov/zones/forecast/UTZ022",
+                    "https://api.weather.gov/zones/forecast/UTZ028",
+                    "https://api.weather.gov/zones/forecast/UTZ029"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d9e2fd526e1e61f9532cd34833bc42a40d097b54.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.d9e2fd526e1e61f9532cd34833bc42a40d097b54.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-30T14:02:00-07:00"
+                    }
+                ],
+                "sent": "2026-10-31T21:37:00-07:00",
+                "effective": "2026-10-31T21:37:00-07:00",
+                "onset": "2026-11-01T05:00:00-07:00",
+                "expires": "2026-11-02T11:00:00-07:00",
+                "ends": "2026-11-02T11:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Junction CO",
+                "headline": "Flood Watch issued October 31 at 10:37PM MDT until November 2 at 11:00AM MST by NWS Grand Junction CO",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of southwest Colorado, including the following\nareas, Animas River Basin, Four Corners/Upper Dolores River, San\nJuan River Basin and Southwest San Juan Mountains and southeast\nUtah, including the following areas, Canyonlands/Natural Bridges,\nLa Sal and Abajo Mountains and Southeast Utah.\n\n* WHEN...From 5 AM MST Sunday through Monday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, recently burned areas, and other low-lying and\nflood-prone locations. Low-water crossings may be flooded. Storm\ndrains and ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- 1 to 3 inches of rain is expected across portions of southeast\nUtah and southwest Colorado from Sunday morning through Monday\nmorning over soils that are still saturated from recent rainfall\nand flooding.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAGJT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KGJT 010437"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM 5 AM MST SUNDAY THROUGH MONDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KGJT.FA.A.0011.261101T1200Z-261102T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-02T11:00:00-07:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.182c1c0ea2959b4257dcf57d2b97131c9d757412.001.1,2026-10-29T21:42:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-11-02T15:31:15+00:00"
+}

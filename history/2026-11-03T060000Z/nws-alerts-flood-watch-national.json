@@ -1,0 +1,639 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.003.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -92.3,
+                            41.89
+                        ],
+                        [
+                            -92.24,
+                            41.87
+                        ],
+                        [
+                            -92.2,
+                            41.85
+                        ],
+                        [
+                            -92.02,
+                            41.81
+                        ],
+                        [
+                            -91.9,
+                            41.79
+                        ],
+                        [
+                            -91.85,
+                            41.81
+                        ],
+                        [
+                            -91.83,
+                            41.81
+                        ],
+                        [
+                            -91.83,
+                            41.77
+                        ],
+                        [
+                            -91.98,
+                            41.77
+                        ],
+                        [
+                            -92.12,
+                            41.81
+                        ],
+                        [
+                            -92.13,
+                            41.82
+                        ],
+                        [
+                            -92.28,
+                            41.84
+                        ],
+                        [
+                            -92.3,
+                            41.85
+                        ],
+                        [
+                            -92.3,
+                            41.89
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.003.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.003.1",
+                "areaDesc": "Benton; Iowa",
+                "geocode": {
+                    "SAME": [
+                        "019011",
+                        "019095"
+                    ],
+                    "UGC": [
+                        "IAZ051",
+                        "IAZ063"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/IAZ051",
+                    "https://api.weather.gov/zones/forecast/IAZ063"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fe3761cd0eccf411b2dc89057926eaa74daf419d.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.fe3761cd0eccf411b2dc89057926eaa74daf419d.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-02T10:40:00-06:00"
+                    }
+                ],
+                "sent": "2026-11-02T21:03:00-06:00",
+                "effective": "2026-11-02T21:03:00-06:00",
+                "onset": "2026-11-04T05:00:00-06:00",
+                "expires": "2026-11-03T21:15:00-06:00",
+                "ends": null,
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Quad Cities IA IL",
+                "headline": "Flood Watch issued November 2 at 9:03PM CST by NWS Quad Cities IA IL",
+                "description": "...The Flood Watch continues for the following rivers in Iowa...\n\nIowa River at Marengo affecting Benton and Iowa Counties.\n\nEnglish River at Kalona affecting Johnson and Washington Counties.\n\nNorth Skunk River near Sigourney affecting Keokuk County.\n\n.Heavy rainfall tonight and Tuesday may produce flooding on portions\nof the Iowa, English, and North Skunk Rivers.\n\n* WHAT...Flooding is possible.\n\n* WHERE...Iowa River at Marengo.\n\n* WHEN...From late Tuesday night until further notice.\n\n* IMPACTS...At 15.0 feet, water reaches the bottom of the levee\nsurrounding Marengo. Water affects low lying agricultural land\nalong the river\n\n* ADDITIONAL DETAILS...\n- At 8:00 PM CST Monday the stage was 11.3 feet.\n- Forecast...Flood stage may be reached early Wednesday afternoon.\n- Flood stage is 15.0 feet.",
+                "instruction": "If you are in the watch area, remain alert to possible flooding.\n\nResidents and those with interests near the river should monitor\nrising water levels and be prepared for possible Flood Warnings.\n\nThe next statement will be issued by Tuesday evening.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFADVN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KDVN 030303"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM LATE TUESDAY NIGHT UNTIL FURTHER NOTICE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KDVN.FL.A.0068.261104T1100Z-000000T0000Z/"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FLA"
+                    ],
+                    "NationalWeatherService": [
+                        "FLA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.002.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -91.94,
+                            41.51
+                        ],
+                        [
+                            -91.83,
+                            41.51
+                        ],
+                        [
+                            -91.69,
+                            41.48
+                        ],
+                        [
+                            -91.66,
+                            41.49
+                        ],
+                        [
+                            -91.58,
+                            41.48
+                        ],
+                        [
+                            -91.56,
+                            41.49
+                        ],
+                        [
+                            -91.53,
+                            41.49
+                        ],
+                        [
+                            -91.53,
+                            41.48
+                        ],
+                        [
+                            -91.52,
+                            41.46
+                        ],
+                        [
+                            -91.64,
+                            41.46
+                        ],
+                        [
+                            -91.68,
+                            41.46
+                        ],
+                        [
+                            -91.69,
+                            41.47
+                        ],
+                        [
+                            -91.76,
+                            41.47
+                        ],
+                        [
+                            -91.78,
+                            41.48
+                        ],
+                        [
+                            -91.83,
+                            41.48
+                        ],
+                        [
+                            -91.87,
+                            41.49
+                        ],
+                        [
+                            -91.94,
+                            41.48
+                        ],
+                        [
+                            -91.94,
+                            41.51
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.002.1",
+                "areaDesc": "Johnson; Washington",
+                "geocode": {
+                    "SAME": [
+                        "019103",
+                        "019183"
+                    ],
+                    "UGC": [
+                        "IAZ064",
+                        "IAZ077"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/IAZ064",
+                    "https://api.weather.gov/zones/forecast/IAZ077"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fe3761cd0eccf411b2dc89057926eaa74daf419d.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.fe3761cd0eccf411b2dc89057926eaa74daf419d.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-02T10:40:00-06:00"
+                    }
+                ],
+                "sent": "2026-11-02T21:03:00-06:00",
+                "effective": "2026-11-02T21:03:00-06:00",
+                "onset": "2026-11-04T04:30:00-06:00",
+                "expires": "2026-11-03T21:15:00-06:00",
+                "ends": "2026-11-06T01:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Quad Cities IA IL",
+                "headline": "Flood Watch issued November 2 at 9:03PM CST until November 6 at 1:00AM CST by NWS Quad Cities IA IL",
+                "description": "...The Flood Watch continues for the following rivers in Iowa...\n\nIowa River at Marengo affecting Benton and Iowa Counties.\n\nEnglish River at Kalona affecting Johnson and Washington Counties.\n\nNorth Skunk River near Sigourney affecting Keokuk County.\n\n.Heavy rainfall tonight and Tuesday may produce flooding on portions\nof the Iowa, English, and North Skunk Rivers.\n\n* WHAT...Flooding is possible.\n\n* WHERE...English River at Kalona.\n\n* WHEN...From late Tuesday night to late Thursday night.\n\n* IMPACTS...At 14.0 feet, agricultural land along the river begins to\nflood.\n\n* ADDITIONAL DETAILS...\n- At 8:00 PM CST Monday the stage was 6.2 feet.\n- Forecast...Flood stage may be reached early Wednesday morning.\n- Flood stage is 14.0 feet.",
+                "instruction": "If you are in the watch area, remain alert to possible flooding.\n\nResidents and those with interests near the river should monitor\nrising water levels and be prepared for possible Flood Warnings.\n\nThe next statement will be issued by Tuesday evening.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFADVN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KDVN 030303"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM LATE TUESDAY NIGHT TO LATE THURSDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KDVN.FL.A.0067.261104T1030Z-261106T0700Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-06T01:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FLA"
+                    ],
+                    "NationalWeatherService": [
+                        "FLA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -92.04,
+                            41.25
+                        ],
+                        [
+                            -92.13,
+                            41.28
+                        ],
+                        [
+                            -92.17,
+                            41.29
+                        ],
+                        [
+                            -92.2,
+                            41.3
+                        ],
+                        [
+                            -92.25,
+                            41.27
+                        ],
+                        [
+                            -92.4,
+                            41.31
+                        ],
+                        [
+                            -92.4,
+                            41.33
+                        ],
+                        [
+                            -92.33,
+                            41.32
+                        ],
+                        [
+                            -92.26,
+                            41.3
+                        ],
+                        [
+                            -92.23,
+                            41.31
+                        ],
+                        [
+                            -92.17,
+                            41.31
+                        ],
+                        [
+                            -92.14,
+                            41.32
+                        ],
+                        [
+                            -92.12,
+                            41.32
+                        ],
+                        [
+                            -92.1,
+                            41.3
+                        ],
+                        [
+                            -92.08,
+                            41.3
+                        ],
+                        [
+                            -92.01,
+                            41.26
+                        ],
+                        [
+                            -92.04,
+                            41.25
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.50f4eaa29ef99c5388baf285b2b072bb0748cdec.001.1",
+                "areaDesc": "Keokuk",
+                "geocode": {
+                    "SAME": [
+                        "019107"
+                    ],
+                    "UGC": [
+                        "IAZ076"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/IAZ076"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0df7bb00760764220a105147a18862fc4642a491.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.0df7bb00760764220a105147a18862fc4642a491.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-02T10:46:00-06:00"
+                    }
+                ],
+                "sent": "2026-11-02T21:03:00-06:00",
+                "effective": "2026-11-02T21:03:00-06:00",
+                "onset": "2026-11-03T22:12:00-06:00",
+                "expires": "2026-11-03T21:15:00-06:00",
+                "ends": "2026-11-06T22:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Quad Cities IA IL",
+                "headline": "Flood Watch issued November 2 at 9:03PM CST until November 6 at 10:00PM CST by NWS Quad Cities IA IL",
+                "description": "...The Flood Watch continues for the following rivers in Iowa...\n\nIowa River at Marengo affecting Benton and Iowa Counties.\n\nEnglish River at Kalona affecting Johnson and Washington Counties.\n\nNorth Skunk River near Sigourney affecting Keokuk County.\n\n.Heavy rainfall tonight and Tuesday may produce flooding on portions\nof the Iowa, English, and North Skunk Rivers.\n\n* WHAT...Flooding is possible.\n\n* WHERE...North Skunk River near Sigourney.\n\n* WHEN...From Tuesday evening to Friday evening.\n\n* IMPACTS...At 16.0 feet, water affects agricultural land, some\ncounty roads, and farm houses.\n\n* ADDITIONAL DETAILS...\n- At 8:30 PM CST Monday the stage was 11.4 feet.\n- Forecast...Flood stage may be reached early Wednesday morning.\n- Flood stage is 16.0 feet.",
+                "instruction": "If you are in the watch area, remain alert to possible flooding.\n\nResidents and those with interests near the river should monitor\nrising water levels and be prepared for possible Flood Warnings.\n\nThe next statement will be issued by Tuesday evening.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFADVN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KDVN 030303"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM TUESDAY EVENING TO FRIDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KDVN.FL.A.0069.261104T0412Z-261107T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-06T22:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FLA"
+                    ],
+                    "NationalWeatherService": [
+                        "FLA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4f9ab229bb871cb475159ccd676055c9332e21ca.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4f9ab229bb871cb475159ccd676055c9332e21ca.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4f9ab229bb871cb475159ccd676055c9332e21ca.001.1",
+                "areaDesc": "Inland Volusia; Okeechobee; Coastal Volusia; Coastal Indian River; Coastal St. Lucie; Coastal Martin; Inland Northern Brevard; Inland Indian River; Inland St. Lucie; Inland Martin; Mainland Northern Brevard; Northern Brevard Barrier Islands; Inland Southern Brevard; Mainland Southern Brevard; Southern Brevard Barrier Islands",
+                "geocode": {
+                    "SAME": [
+                        "012127",
+                        "012093",
+                        "012061",
+                        "012111",
+                        "012085",
+                        "012009"
+                    ],
+                    "UGC": [
+                        "FLZ041",
+                        "FLZ058",
+                        "FLZ141",
+                        "FLZ154",
+                        "FLZ159",
+                        "FLZ164",
+                        "FLZ247",
+                        "FLZ254",
+                        "FLZ259",
+                        "FLZ264",
+                        "FLZ347",
+                        "FLZ447",
+                        "FLZ547",
+                        "FLZ647",
+                        "FLZ747"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ041",
+                    "https://api.weather.gov/zones/forecast/FLZ058",
+                    "https://api.weather.gov/zones/forecast/FLZ141",
+                    "https://api.weather.gov/zones/forecast/FLZ154",
+                    "https://api.weather.gov/zones/forecast/FLZ159",
+                    "https://api.weather.gov/zones/forecast/FLZ164",
+                    "https://api.weather.gov/zones/forecast/FLZ247",
+                    "https://api.weather.gov/zones/forecast/FLZ254",
+                    "https://api.weather.gov/zones/forecast/FLZ259",
+                    "https://api.weather.gov/zones/forecast/FLZ264",
+                    "https://api.weather.gov/zones/forecast/FLZ347",
+                    "https://api.weather.gov/zones/forecast/FLZ447",
+                    "https://api.weather.gov/zones/forecast/FLZ547",
+                    "https://api.weather.gov/zones/forecast/FLZ647",
+                    "https://api.weather.gov/zones/forecast/FLZ747"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.108559cb19ecfde4fa3e804589e3e1cdbacac774.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.108559cb19ecfde4fa3e804589e3e1cdbacac774.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-31T23:41:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.eb8f23614741a837397c515901b2b5b3016d0312.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.eb8f23614741a837397c515901b2b5b3016d0312.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T12:39:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.eb8f23614741a837397c515901b2b5b3016d0312.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.eb8f23614741a837397c515901b2b5b3016d0312.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T12:39:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.027872c2b571a05c79f39a2acfa2e3383f77b459.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.027872c2b571a05c79f39a2acfa2e3383f77b459.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T20:06:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.027872c2b571a05c79f39a2acfa2e3383f77b459.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.027872c2b571a05c79f39a2acfa2e3383f77b459.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T20:06:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c2c270961ae506c66262159e4946611664f737ea.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.c2c270961ae506c66262159e4946611664f737ea.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-01T23:09:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-02T13:37:00-05:00",
+                "effective": "2026-11-02T13:37:00-05:00",
+                "onset": "2026-11-02T13:37:00-05:00",
+                "expires": "2026-11-03T10:00:00-05:00",
+                "ends": "2026-11-03T10:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flood Watch issued November 2 at 1:37PM EST until November 3 at 10:00AM EST by NWS Melbourne FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of east central Florida, including the following\nareas, Indian River, Martin, Saint Lucie, Volusia, Okeechobee and\nBrevard.\n\n* WHEN...Through Tuesday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nCreeks and streams may rise out of their banks. Flooding may occur\nin poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Heavy to extreme rainfall has occurred over coastal portions of\neast central Florida today. Any additional rainfall overnight may\nexacerbate ongoing flooding.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMLB 021837"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH NOW IN EFFECT THROUGH TUESDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KMLB.FA.A.0003.000000T0000Z-261103T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-03T10:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-11-03T06:24:58+00:00"
+}

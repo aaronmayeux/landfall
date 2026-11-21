@@ -1,0 +1,31 @@
+ABNT20 KNHC 041149
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+700 AM EST Wed Nov 4 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Western and Central Atlantic:
+A broad area of low pressure is forming along a remnant frontal 
+boundary a few hundred miles south of Bermuda. Environmental 
+conditions could support this system gradually acquiring subtropical 
+characteristics through this weekend while it moves slowly eastward 
+over the western and central subtropical Atlantic. By early next 
+week, environmental conditions are forecast to become unfavorable 
+for further development. For more information on this system, 
+including Gale Warnings, please see High Seas Forecasts issued by 
+the National Weather Service. 
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Papin/Pasch
+
+

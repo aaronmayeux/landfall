@@ -1,0 +1,36 @@
+ABPZ20 KNHC 051742
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1000 AM PST Thu Nov 5 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Eastern Central Pacific (CP95): 
+Showers and thunderstorms associated with an area of low pressure 
+located several hundred miles to the southeast of the Big Island of 
+Hawaii continue to become better organized. Environmental conditions 
+are conducive for additional development, and a tropical depression 
+is expected to develop, possibly as soon as later today. The system 
+is forecast to move west-northwestward to westward at 10 to 15 mph, 
+passing well south of the Hawaiian Islands. 
+* Formation chance through 48 hours...high...90 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Eastern East Pacific:
+A broad area of low pressure offshore of Central America is 
+producing a large area of showers and thunderstorms that remain 
+disorganized. Gradual development of this system is still possible 
+during the next several days, and a tropical depression could form 
+by this weekend while the low drifts slowly offshore of the Central 
+America coast. Regardless of development, this system could bring 
+areas of heavy rain to portions of Central America through this 
+weekend.
+* Formation chance through 48 hours...medium...40 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+$$
+Forecaster Evans/Papin
+
+

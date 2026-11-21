@@ -1,0 +1,258 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2c6dd2425359e89eb9f1490ea0a77cbf942c9367.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2c6dd2425359e89eb9f1490ea0a77cbf942c9367.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2c6dd2425359e89eb9f1490ea0a77cbf942c9367.001.1",
+                "areaDesc": "Zapata; Jim Hogg; Brooks; Starr",
+                "geocode": {
+                    "SAME": [
+                        "048505",
+                        "048247",
+                        "048047",
+                        "048427"
+                    ],
+                    "UGC": [
+                        "TXZ248",
+                        "TXZ249",
+                        "TXZ250",
+                        "TXZ252"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/TXZ248",
+                    "https://api.weather.gov/zones/forecast/TXZ249",
+                    "https://api.weather.gov/zones/forecast/TXZ250",
+                    "https://api.weather.gov/zones/forecast/TXZ252"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a22212e9b8c208dab51c4278c5a521384981dcdb.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a22212e9b8c208dab51c4278c5a521384981dcdb.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-07T21:50:00-06:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a22212e9b8c208dab51c4278c5a521384981dcdb.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a22212e9b8c208dab51c4278c5a521384981dcdb.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-07T21:50:00-06:00"
+                    }
+                ],
+                "sent": "2026-11-08T05:24:00-06:00",
+                "effective": "2026-11-08T05:24:00-06:00",
+                "onset": "2026-11-08T05:24:00-06:00",
+                "expires": "2026-11-08T14:00:00-06:00",
+                "ends": "2026-11-09T09:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Brownsville TX",
+                "headline": "Flood Watch issued November 8 at 5:24AM CST until November 9 at 9:00AM CST by NWS Brownsville TX",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of Deep South Texas, including the following\ncounties, Brooks, Jim Hogg, Starr and Zapata.\n\n* WHEN...Through Monday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nCreeks and streams may rise out of their banks. Flooding may occur\nin poor drainage and urban areas. Storm drains and ditches may\nbecome clogged with debris.\n\n* ADDITIONAL DETAILS...\n- Potential for heavy rainfall, including two windows where\nrainfall rates could reach 2 inches per hour for two hours both\nlate tonight and early Sunday morning, and again Sunday night\nthrough mid morning Monday.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFABRO"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KBRO 081124"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH MONDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KBRO.FA.A.0003.000000T0000Z-261109T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-09T09:00:00-06:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.000e63d734b9faefc28e32108e5329a6e5049139.001.1,2026-11-07T11:34:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1ee09162c04104a71f42c64a78674b1a756d3fde.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1ee09162c04104a71f42c64a78674b1a756d3fde.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.1ee09162c04104a71f42c64a78674b1a756d3fde.001.1",
+                "areaDesc": "La Salle; McMullen; Live Oak; Bee; Goliad; Webb; Duval; Jim Wells; Inland Kleberg; Inland Nueces; Inland San Patricio; Coastal Aransas; Inland Refugio; Coastal Kleberg; Coastal Nueces; Coastal San Patricio; Aransas Islands; Coastal Refugio; Kleberg Islands; Nueces Islands",
+                "geocode": {
+                    "SAME": [
+                        "048283",
+                        "048311",
+                        "048297",
+                        "048025",
+                        "048175",
+                        "048479",
+                        "048131",
+                        "048249",
+                        "048273",
+                        "048355",
+                        "048409",
+                        "048007",
+                        "048391"
+                    ],
+                    "UGC": [
+                        "TXZ229",
+                        "TXZ230",
+                        "TXZ231",
+                        "TXZ232",
+                        "TXZ233",
+                        "TXZ239",
+                        "TXZ240",
+                        "TXZ241",
+                        "TXZ242",
+                        "TXZ243",
+                        "TXZ244",
+                        "TXZ245",
+                        "TXZ246",
+                        "TXZ342",
+                        "TXZ343",
+                        "TXZ344",
+                        "TXZ345",
+                        "TXZ346",
+                        "TXZ442",
+                        "TXZ443"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/TXZ229",
+                    "https://api.weather.gov/zones/forecast/TXZ230",
+                    "https://api.weather.gov/zones/forecast/TXZ231",
+                    "https://api.weather.gov/zones/forecast/TXZ232",
+                    "https://api.weather.gov/zones/forecast/TXZ233",
+                    "https://api.weather.gov/zones/forecast/TXZ239",
+                    "https://api.weather.gov/zones/forecast/TXZ240",
+                    "https://api.weather.gov/zones/forecast/TXZ241",
+                    "https://api.weather.gov/zones/forecast/TXZ242",
+                    "https://api.weather.gov/zones/forecast/TXZ243",
+                    "https://api.weather.gov/zones/forecast/TXZ244",
+                    "https://api.weather.gov/zones/forecast/TXZ245",
+                    "https://api.weather.gov/zones/forecast/TXZ246",
+                    "https://api.weather.gov/zones/forecast/TXZ342",
+                    "https://api.weather.gov/zones/forecast/TXZ343",
+                    "https://api.weather.gov/zones/forecast/TXZ344",
+                    "https://api.weather.gov/zones/forecast/TXZ345",
+                    "https://api.weather.gov/zones/forecast/TXZ346",
+                    "https://api.weather.gov/zones/forecast/TXZ442",
+                    "https://api.weather.gov/zones/forecast/TXZ443"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8122ebe2f7767ea464106f7801d614a401041a9a.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.8122ebe2f7767ea464106f7801d614a401041a9a.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-07T15:57:00-06:00"
+                    }
+                ],
+                "sent": "2026-11-08T00:34:00-06:00",
+                "effective": "2026-11-08T00:34:00-06:00",
+                "onset": "2026-11-08T00:34:00-06:00",
+                "expires": "2026-11-08T18:00:00-06:00",
+                "ends": "2026-11-09T12:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Corpus Christi TX",
+                "headline": "Flood Watch issued November 8 at 12:34AM CST until November 9 at 12:00PM CST by NWS Corpus Christi TX",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of south Texas, including the following areas,\nAransas Islands, Bee, Coastal Aransas, Coastal Kleberg, Coastal\nNueces, Coastal Refugio, Coastal San Patricio, Duval, Goliad,\nInland Kleberg, Inland Nueces, Inland Refugio, Inland San Patricio,\nJim Wells, Kleberg Islands, La Salle, Live Oak, McMullen, Nueces\nIslands and Webb.\n\n* WHEN...Through Monday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Widespread forecast rainfall amounts of 2-5 inches will be common\nacross South Texas. Isolated amounts of 7 to 9 inches remains a\npossibility, especially in the vicinity of training and slow\nmoving storms. While soils will be able to absorb most of this\nmoisture, the higher rainfall rates, slow storm motion, and\ntraining can quickly lead to localized, urban flooding and in\nlocations with poor drainage.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFACRP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KCRP 080634"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH MONDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KCRP.FA.A.0005.000000T0000Z-261109T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-09T12:00:00-06:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.52b47af078f7c8e4a87006184e64b537a0daf3e0.001.1,2026-11-06T20:17:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-11-08T14:58:07+00:00"
+}

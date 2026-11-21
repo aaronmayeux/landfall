@@ -1,0 +1,45 @@
+ABNT20 KNHC 202310
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+700 PM EST Fri Nov 20 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Offshore of the Southeast U.S. Coast:
+A complex and large low pressure system includes three embedded low 
+pressure centers, one over the Gulf of America, another over 
+west-central Florida, and a third a few hundred miles east-northeast 
+of the northwestern Bahamas. All of these systems are currently 
+non-tropical. However, the system over the western Atlantic still 
+has some potential to acquire subtropical or tropical 
+characteristics over the next day or two while it moves northward, 
+passing near the North Carolina and mid-Atlantic coasts on Sunday. 
+
+Although the chances of subtropical or tropical development appear 
+to be decreasing, this large weather system is still expected to 
+produce gusty winds, dangerous surf, rip currents and coastal 
+flooding along portions of the southeast and mid-Atlantic U.S. 
+coasts into early next week. In addition, heavy rainfall and the 
+threat of flash flooding will continue across portions of the 
+northeast Florida peninsula tonight, spreading northward over 
+coastal portions of the Carolinas and the mid-Atlantic over the 
+weekend. Interests along the eastern coast of the United States 
+should continue to monitor the progress of this system. Additional 
+information on this system, including Gale Warnings, can be found in 
+High Seas Forecasts issued by the National Weather Service, as well 
+as products issued by your local National Weather Service forecast 
+office.
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...low...30 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Cangialosi
+
+
