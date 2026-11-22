@@ -1,0 +1,238 @@
+{
+  "at": "2026-11-22T15:17:57.645Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "crash": null,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "mapCreated": true,
+      "mapCreatedAtMs": 2561,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 5148,
+      "styleLoadedNow": true,
+      "storms": 1,
+      "ttfbMs": 196,
+      "fcpMs": 476,
+      "lcpMs": 476,
+      "dclMs": 2758,
+      "loadMs": 3588,
+      "bootMarks": {
+        "create": 2561.100000000006,
+        "load": 5148.399999999994,
+        "fullLoad": 6167.899999999994
+      },
+      "longTaskCount": 30,
+      "blockedMs": 26413,
+      "blockedLoadMs": 2605,
+      "blockedLoadTaskCount": 7,
+      "blockedAfterMs": 23808,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 14,
+      "staircaseMs": 1994,
+      "firstModuleAtMs": 237,
+      "lastModuleAtMs": 2231,
+      "vendorCount": 3,
+      "vendorKB": 403,
+      "apiCount": 13,
+      "apiKB": 74,
+      "totalRequests": 235,
+      "transferKB": 2253,
+      "firstApiAtMs": 2742,
+      "data": {
+        "depth": 5,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2742
+          },
+          {
+            "url": "/api/nhc/genesis?part=areas",
+            "startMs": 4176
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 7102
+          },
+          {
+            "url": "/api/tcgp/adeck?storm=sh042027&carq=1",
+            "startMs": 9554
+          },
+          {
+            "url": "/api/gdacs/geometry?url=https%3A%2F%2Fwww.gdacs.org%2Fgdacsapi%2Fapi%2Fpolygons",
+            "startMs": 10590
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "mapCreated": true,
+      "mapCreatedAtMs": 1162,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 3542,
+      "styleLoadedNow": true,
+      "storms": 1,
+      "ttfbMs": 12,
+      "fcpMs": 692,
+      "lcpMs": 692,
+      "dclMs": 1305,
+      "loadMs": 1309,
+      "bootMarks": {
+        "create": 1162.2000000000116,
+        "load": 3541.7000000000116,
+        "fullLoad": 4544.100000000006
+      },
+      "longTaskCount": 34,
+      "blockedMs": 25989,
+      "blockedLoadMs": 4240,
+      "blockedLoadTaskCount": 11,
+      "blockedAfterMs": 21749,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 4,
+      "staircaseMs": 517,
+      "firstModuleAtMs": 610,
+      "lastModuleAtMs": 1127,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 13,
+      "apiKB": 74,
+      "totalRequests": 235,
+      "transferKB": 74,
+      "firstApiAtMs": 1298,
+      "data": {
+        "depth": 5,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 1298
+          },
+          {
+            "url": "/api/nhc/genesis?part=areas",
+            "startMs": 2533
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 5430
+          },
+          {
+            "url": "/api/tcgp/adeck?storm=sh042027&carq=1",
+            "startMs": 7327
+          },
+          {
+            "url": "/api/gdacs/geometry?url=https%3A%2F%2Fwww.gdacs.org%2Fgdacsapi%2Fapi%2Fpolygons",
+            "startMs": 8183
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "mapCreated": true,
+    "mapCreatedAtMs": 3076,
+    "styleLoaded": true,
+    "mapLoadedAtMs": 5665,
+    "styleLoadedNow": true,
+    "storms": 1,
+    "ttfbMs": 63,
+    "fcpMs": 992,
+    "lcpMs": 992,
+    "dclMs": 3288,
+    "loadMs": 4072,
+    "bootMarks": {
+      "create": 3076.100000000006,
+      "load": 5665.400000000023,
+      "fullLoad": 6665.8000000000175
+    },
+    "longTaskCount": 32,
+    "blockedMs": 26368,
+    "blockedLoadMs": 2047,
+    "blockedLoadTaskCount": 6,
+    "blockedAfterMs": 24321,
+    "blockedWindowMs": 5000,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 214,
+    "ourWaves": 15,
+    "staircaseMs": 2578,
+    "firstModuleAtMs": 168,
+    "lastModuleAtMs": 2745,
+    "vendorCount": 3,
+    "vendorKB": 403,
+    "apiCount": 15,
+    "apiKB": 77,
+    "totalRequests": 237,
+    "transferKB": 2257,
+    "firstApiAtMs": 3274,
+    "data": {
+      "depth": 6,
+      "chain": [
+        {
+          "url": "/api/nws/flood",
+          "startMs": 3274
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 3557
+        },
+        {
+          "url": "/api/nhc/genesis?part=areas",
+          "startMs": 4677
+        },
+        {
+          "url": "/api/tcgp/storms",
+          "startMs": 7613
+        },
+        {
+          "url": "/api/tcgp/adeck?storm=sh042027&carq=1",
+          "startMs": 10364
+        },
+        {
+          "url": "/api/imagery/radar-coverage?lat=-11.70&lon=-167.90&z=5&px=512",
+          "startMs": 13061
+        }
+      ]
+    },
+    "radarTiles": 2,
+    "radarOnLoad": 2,
+    "radarOnPan": 0,
+    "frames": {
+      "frames": 4,
+      "medianMs": 966.7,
+      "p95Ms": 983.3,
+      "worstMs": 983.3,
+      "droppedPct": 75,
+      "approxFps": 1
+    }
+  },
+  "budget": {
+    "ok": true,
+    "notes": [
+      "ok   ourModules: 214 <= 240",
+      "ok   ourWaves: 4 <= 8",
+      "ok   staircaseMs: 517 <= 3000",
+      "ok   dataSerialDepth: 5 <= 6",
+      "--   blockedLoadMs: 4240 (no budget yet — reporting only)",
+      "--   mapLoadedAtMs: 3542 (no budget yet — reporting only)",
+      "--   blockedMs: 25989 (no budget yet — reporting only)",
+      "ok   transferKB: 74 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 0 <= 120"
+    ]
+  }
+}
