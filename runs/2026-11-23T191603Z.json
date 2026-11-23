@@ -1,0 +1,238 @@
+{
+  "at": "2026-11-23T19:16:00.937Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "crash": null,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "mapCreated": true,
+      "mapCreatedAtMs": 2707,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 5636,
+      "styleLoadedNow": true,
+      "storms": 1,
+      "ttfbMs": 383,
+      "fcpMs": 644,
+      "lcpMs": 644,
+      "dclMs": 2896,
+      "loadMs": 3617,
+      "bootMarks": {
+        "create": 2707.3000000000466,
+        "load": 5635.900000000023,
+        "fullLoad": 5636.900000000023
+      },
+      "longTaskCount": 28,
+      "blockedMs": 25221,
+      "blockedLoadMs": 2948,
+      "blockedLoadTaskCount": 7,
+      "blockedAfterMs": 22273,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 17,
+      "staircaseMs": 1985,
+      "firstModuleAtMs": 415,
+      "lastModuleAtMs": 2400,
+      "vendorCount": 3,
+      "vendorKB": 403,
+      "apiCount": 14,
+      "apiKB": 122,
+      "totalRequests": 236,
+      "transferKB": 2302,
+      "firstApiAtMs": 2871,
+      "data": {
+        "depth": 5,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2871
+          },
+          {
+            "url": "/api/nws/zone?ids=FLZ058%2CFLZ154%2CFLZ159%2CFLZ164%2CFLZ247%2CFLZ254%2CF",
+            "startMs": 4130
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 6670
+          },
+          {
+            "url": "/api/tcgp/adeck?storm=sh042027&carq=1",
+            "startMs": 10234
+          },
+          {
+            "url": "/api/gdacs/geometry?url=https%3A%2F%2Fwww.gdacs.org%2Fgdacsapi%2Fapi%2Fpolygons",
+            "startMs": 11507
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "mapCreated": true,
+      "mapCreatedAtMs": 1106,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 3330,
+      "styleLoadedNow": true,
+      "storms": 1,
+      "ttfbMs": 18,
+      "fcpMs": 740,
+      "lcpMs": 740,
+      "dclMs": 1248,
+      "loadMs": 1252,
+      "bootMarks": {
+        "create": 1106,
+        "load": 3329.899999999907,
+        "fullLoad": 4295.199999999953
+      },
+      "longTaskCount": 34,
+      "blockedMs": 25647,
+      "blockedLoadMs": 4062,
+      "blockedLoadTaskCount": 11,
+      "blockedAfterMs": 21585,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 3,
+      "staircaseMs": 442,
+      "firstModuleAtMs": 634,
+      "lastModuleAtMs": 1075,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 14,
+      "apiKB": 122,
+      "totalRequests": 236,
+      "transferKB": 122,
+      "firstApiAtMs": 1239,
+      "data": {
+        "depth": 5,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 1239
+          },
+          {
+            "url": "/api/nws/zone?ids=FLZ058%2CFLZ154%2CFLZ159%2CFLZ164%2CFLZ247%2CFLZ254%2CF",
+            "startMs": 2358
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 5157
+          },
+          {
+            "url": "/api/tcgp/adeck?storm=sh042027&carq=1",
+            "startMs": 7084
+          },
+          {
+            "url": "/api/gdacs/geometry?url=https%3A%2F%2Fwww.gdacs.org%2Fgdacsapi%2Fapi%2Fpolygons",
+            "startMs": 8022
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "mapCreated": true,
+    "mapCreatedAtMs": 2794,
+    "styleLoaded": true,
+    "mapLoadedAtMs": 5176,
+    "styleLoadedNow": true,
+    "storms": 1,
+    "ttfbMs": 119,
+    "fcpMs": 672,
+    "lcpMs": 672,
+    "dclMs": 2994,
+    "loadMs": 2999,
+    "bootMarks": {
+      "create": 2793.899999999907,
+      "load": 5176.29999999993,
+      "fullLoad": 6155.899999999907
+    },
+    "longTaskCount": 32,
+    "blockedMs": 25041,
+    "blockedLoadMs": 2386,
+    "blockedLoadTaskCount": 8,
+    "blockedAfterMs": 22655,
+    "blockedWindowMs": 5000,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 214,
+    "ourWaves": 12,
+    "staircaseMs": 2369,
+    "firstModuleAtMs": 194,
+    "lastModuleAtMs": 2563,
+    "vendorCount": 3,
+    "vendorKB": 403,
+    "apiCount": 16,
+    "apiKB": 125,
+    "totalRequests": 238,
+    "transferKB": 2304,
+    "firstApiAtMs": 2981,
+    "data": {
+      "depth": 6,
+      "chain": [
+        {
+          "url": "/api/nhc/outlook?basin=epacific",
+          "startMs": 2985
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 3243
+        },
+        {
+          "url": "/api/jtwc/storms",
+          "startMs": 4259
+        },
+        {
+          "url": "/api/tcgp/storms",
+          "startMs": 7092
+        },
+        {
+          "url": "/api/tcgp/adeck?storm=sh042027&carq=1",
+          "startMs": 8880
+        },
+        {
+          "url": "/api/imagery/radar-coverage?lat=-11.80&lon=-168.80&z=5&px=512",
+          "startMs": 9803
+        }
+      ]
+    },
+    "radarTiles": 2,
+    "radarOnLoad": 2,
+    "radarOnPan": 0,
+    "frames": {
+      "frames": 4,
+      "medianMs": 933.3,
+      "p95Ms": 983.3,
+      "worstMs": 983.3,
+      "droppedPct": 75,
+      "approxFps": 1
+    }
+  },
+  "budget": {
+    "ok": true,
+    "notes": [
+      "ok   ourModules: 214 <= 240",
+      "ok   ourWaves: 3 <= 8",
+      "ok   staircaseMs: 442 <= 3000",
+      "ok   dataSerialDepth: 5 <= 6",
+      "--   blockedLoadMs: 4062 (no budget yet — reporting only)",
+      "--   mapLoadedAtMs: 3330 (no budget yet — reporting only)",
+      "--   blockedMs: 25647 (no budget yet — reporting only)",
+      "ok   transferKB: 122 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 0 <= 120"
+    ]
+  }
+}
