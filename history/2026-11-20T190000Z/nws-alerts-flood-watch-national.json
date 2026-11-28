@@ -1,0 +1,318 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f368520d1de3d88bd754cc4012f90907a2a21ee2.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f368520d1de3d88bd754cc4012f90907a2a21ee2.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f368520d1de3d88bd754cc4012f90907a2a21ee2.001.1",
+                "areaDesc": "Inland Nassau; Coastal Nassau",
+                "geocode": {
+                    "SAME": [
+                        "012089"
+                    ],
+                    "UGC": [
+                        "FLZ024",
+                        "FLZ124"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ024",
+                    "https://api.weather.gov/zones/forecast/FLZ124"
+                ],
+                "references": [],
+                "sent": "2026-11-20T11:36:00-05:00",
+                "effective": "2026-11-20T11:36:00-05:00",
+                "onset": "2026-11-20T11:36:00-05:00",
+                "expires": "2026-11-21T04:00:00-05:00",
+                "ends": "2026-11-21T14:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jacksonville FL",
+                "headline": "Flood Watch issued November 20 at 11:36AM EST until November 21 at 2:00PM EST by NWS Jacksonville FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of northeast Florida, including the following\nareas, Coastal Nassau and Inland Nassau.\n\n* WHEN...Through Saturday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Saturated soils and substantial rainfall overnight tonight into\nSaturday morning will present a flooding rainfall risk for\ncoastal counties of northeastern Florida. Broad rainfall amounts\nare expected to range from 2 to 4 inches with locally higher\namounts up to 6 inches over the next 24 hours.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAJAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KJAX 201636"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT THROUGH SATURDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXA.KJAX.FA.A.0007.000000T0000Z-261121T1900Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-21T14:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f368520d1de3d88bd754cc4012f90907a2a21ee2.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f368520d1de3d88bd754cc4012f90907a2a21ee2.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f368520d1de3d88bd754cc4012f90907a2a21ee2.002.1",
+                "areaDesc": "Inland Flagler; Coastal Duval; Eastern Clay; Eastern Putnam; Coastal Flagler; Trout River; Western Clay; Northeast Coastal St. Johns; Western Putnam; South Central Duval; Southeast Coastal St. Johns; Western Duval; Northern Inland St. Johns; Southern Inland St. Johns; Western St. Johns",
+                "geocode": {
+                    "SAME": [
+                        "012035",
+                        "012031",
+                        "012019",
+                        "012107",
+                        "012109"
+                    ],
+                    "UGC": [
+                        "FLZ038",
+                        "FLZ125",
+                        "FLZ132",
+                        "FLZ137",
+                        "FLZ138",
+                        "FLZ225",
+                        "FLZ232",
+                        "FLZ233",
+                        "FLZ237",
+                        "FLZ325",
+                        "FLZ333",
+                        "FLZ425",
+                        "FLZ433",
+                        "FLZ533",
+                        "FLZ633"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ038",
+                    "https://api.weather.gov/zones/forecast/FLZ125",
+                    "https://api.weather.gov/zones/forecast/FLZ132",
+                    "https://api.weather.gov/zones/forecast/FLZ137",
+                    "https://api.weather.gov/zones/forecast/FLZ138",
+                    "https://api.weather.gov/zones/forecast/FLZ225",
+                    "https://api.weather.gov/zones/forecast/FLZ232",
+                    "https://api.weather.gov/zones/forecast/FLZ233",
+                    "https://api.weather.gov/zones/forecast/FLZ237",
+                    "https://api.weather.gov/zones/forecast/FLZ325",
+                    "https://api.weather.gov/zones/forecast/FLZ333",
+                    "https://api.weather.gov/zones/forecast/FLZ425",
+                    "https://api.weather.gov/zones/forecast/FLZ433",
+                    "https://api.weather.gov/zones/forecast/FLZ533",
+                    "https://api.weather.gov/zones/forecast/FLZ633"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.226defa2de42de15968d93f19aba1b9cbaceeda5.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.226defa2de42de15968d93f19aba1b9cbaceeda5.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-20T01:23:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-20T11:36:00-05:00",
+                "effective": "2026-11-20T11:36:00-05:00",
+                "onset": "2026-11-20T11:36:00-05:00",
+                "expires": "2026-11-21T04:00:00-05:00",
+                "ends": "2026-11-21T14:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jacksonville FL",
+                "headline": "Flood Watch issued November 20 at 11:36AM EST until November 21 at 2:00PM EST by NWS Jacksonville FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of northeast Florida, including the following\nareas, Coastal Duval, Coastal Flagler, Eastern Clay, Eastern\nPutnam, Inland Flagler, Northeast Coastal St. Johns, Northern\nInland St. Johns, South Central Duval, Southeast Coastal St. Johns,\nSouthern Inland St. Johns, Trout River, Western Clay, Western\nDuval, Western Putnam and Western St. Johns.\n\n* WHEN...Through Saturday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Saturated soils and substantial rainfall overnight tonight into\nSaturday morning will present a flooding rainfall risk for\ncoastal counties of northeastern Florida. Broad rainfall amounts\nare expected to range from 2 to 6 inches with locally higher\namounts up to 8 inches over the next 24 hours.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAJAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KJAX 201636"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH SATURDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KJAX.FA.A.0007.000000T0000Z-261121T1900Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-21T14:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9a298d23f50c1e339ddb968387a6814b14ecb89e.001.1,2026-11-19T09:10:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.66042f8720c775013295f8117e9bcd501e404d62.001.1,2026-11-19T01:13:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.bca7efc483b4e27845ebd66cd92a34be12314e03.001.1,2026-11-18T00:30:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.133bf9c0650e77ee833d46ad6340415a88edf236.002.1,2026-11-17T12:14:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.133bf9c0650e77ee833d46ad6340415a88edf236.001.1,2026-11-17T12:14:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.5efcd975d8b2f9794e18aeb81531ddb753c86663.001.1,2026-11-16T23:29:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d1aaf9bd78b8d85140b04089c05774f27988735e.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d1aaf9bd78b8d85140b04089c05774f27988735e.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d1aaf9bd78b8d85140b04089c05774f27988735e.002.1",
+                "areaDesc": "Inland Volusia; Coastal Volusia; Inland Northern Brevard; Mainland Northern Brevard; Northern Brevard Barrier Islands",
+                "geocode": {
+                    "SAME": [
+                        "012127",
+                        "012009"
+                    ],
+                    "UGC": [
+                        "FLZ041",
+                        "FLZ141",
+                        "FLZ247",
+                        "FLZ347",
+                        "FLZ447"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ041",
+                    "https://api.weather.gov/zones/forecast/FLZ141",
+                    "https://api.weather.gov/zones/forecast/FLZ247",
+                    "https://api.weather.gov/zones/forecast/FLZ347",
+                    "https://api.weather.gov/zones/forecast/FLZ447"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8c11a51fff36cca6e5c7d021e392a554c3802420.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.8c11a51fff36cca6e5c7d021e392a554c3802420.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-16T15:18:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5e85fbdb2531f002de5d8ce32785eb941db264af.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.5e85fbdb2531f002de5d8ce32785eb941db264af.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-20T07:52:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-20T10:23:00-05:00",
+                "effective": "2026-11-20T10:23:00-05:00",
+                "onset": "2026-11-20T10:23:00-05:00",
+                "expires": "2026-11-20T19:00:00-05:00",
+                "ends": "2026-11-20T19:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flood Watch issued November 20 at 10:23AM EST until November 20 at 7:00PM EST by NWS Melbourne FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of east central Florida, including the following\nareas, Coastal Volusia, Inland Northern Brevard, Inland Volusia,\nMainland Northern Brevard and Northern Brevard Barrier Islands.\n\n* WHEN...Until 7 PM EST this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nExtensive street flooding and flooding of creeks and rivers are\npossible. Area creeks and streams are running high and could flood\nwith more heavy rain.\n\n* ADDITIONAL DETAILS...\n- Showers will continue to move onshore across Volusia county with\nthe threat for additional flooding through late afternoon.\nAdditional rainfall amounts up to 2 to 4 inches are possible.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMLB 201523"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 7 PM EST THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KMLB.FA.A.0004.000000T0000Z-261121T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-20T19:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-11-20T19:56:27+00:00"
+}

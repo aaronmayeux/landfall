@@ -1,0 +1,165 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3ca591feb28e7469d75ec490b68dbc7f000fc068.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -66.25,
+                            18.45
+                        ],
+                        [
+                            -66.21,
+                            18.46
+                        ],
+                        [
+                            -66.19,
+                            18.45
+                        ],
+                        [
+                            -66.21,
+                            18.47
+                        ],
+                        [
+                            -66.19,
+                            18.48
+                        ],
+                        [
+                            -66.16,
+                            18.45
+                        ],
+                        [
+                            -66.14,
+                            18.48
+                        ],
+                        [
+                            -66.16,
+                            18.44
+                        ],
+                        [
+                            -66.14,
+                            18.46
+                        ],
+                        [
+                            -66.14,
+                            18.44
+                        ],
+                        [
+                            -66.11,
+                            18.44
+                        ],
+                        [
+                            -66.1,
+                            18.42
+                        ],
+                        [
+                            -66.11,
+                            18.37
+                        ],
+                        [
+                            -66.25,
+                            18.45
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3ca591feb28e7469d75ec490b68dbc7f000fc068.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3ca591feb28e7469d75ec490b68dbc7f000fc068.001.1",
+                "areaDesc": "Bayamon, PR; Catano, PR; Guaynabo, PR; Toa Baja, PR",
+                "geocode": {
+                    "SAME": [
+                        "072021",
+                        "072033",
+                        "072061",
+                        "072137"
+                    ],
+                    "UGC": [
+                        "PRC021",
+                        "PRC033",
+                        "PRC061",
+                        "PRC137"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PRC021",
+                    "https://api.weather.gov/zones/county/PRC033",
+                    "https://api.weather.gov/zones/county/PRC061",
+                    "https://api.weather.gov/zones/county/PRC137"
+                ],
+                "references": [],
+                "sent": "2026-11-22T14:01:00-04:00",
+                "effective": "2026-11-22T14:01:00-04:00",
+                "onset": "2026-11-22T14:01:00-04:00",
+                "expires": "2026-11-22T17:00:00-04:00",
+                "ends": "2026-11-22T17:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS San Juan PR",
+                "headline": "Flash Flood Warning issued November 22 at 2:01PM AST until November 22 at 5:00PM AST by NWS San Juan PR",
+                "description": "FFWSJU\n\nThe National Weather Service in San Juan has issued a\n\n* Flash Flood Warning for...\nBayamon...Catano...Guaynabo and Toa Baja...\n\n* Until 500 PM AST.\n\n* At 201 PM AST, Doppler radar indicated strong thunderstorms\nproducing heavy rain across the warned area, including northern\nGuaynabo and northern Bayamon. Up to 3 inches of rain have fallen.\nAdditional rainfall amounts of 1 to 3 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nSabana Seca, Catano, Guaynabo, Levittown and Ingenio.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSJU"
+                    ],
+                    "WMOidentifier": [
+                        "WGCA52 TJSJ 221801"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.TJSJ.FF.W.0044.261122T1801Z-261122T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-22T17:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-22T20:15:57+00:00"
+}

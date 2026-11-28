@@ -1,0 +1,33 @@
+ABNT20 KNHC 071136
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+700 AM EST Sat Nov 7 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Western and Central Atlantic (AL94):
+A non-tropical low pressure area located several hundred miles 
+south-southeast of Bermuda is producing disorganized showers and 
+thunderstorms. The low could still acquire some subtropical 
+characteristics through tonight before upper-level winds increase 
+on Sunday. The low is forecast to move generally eastward over the 
+western and central subtropical Atlantic during the next couple of 
+days and become absorbed by a new non-tropical low pressure system 
+to its east early next week. Regardless, gale-force winds are 
+likely over parts of the central subtropical Atlantic through the 
+weekend. For more information, including Gale Warnings, see High 
+Seas Forecasts issued by the National Weather Service.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...10 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Mahoney
+
+

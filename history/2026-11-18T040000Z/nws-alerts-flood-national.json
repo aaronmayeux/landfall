@@ -1,0 +1,743 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.24b0ea93ecbbb3875d56284d5c3b20a8d59548bd.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.29,
+                            26.21
+                        ],
+                        [
+                            -80.3,
+                            26.08
+                        ],
+                        [
+                            -80.4,
+                            26.1
+                        ],
+                        [
+                            -80.36,
+                            26.26
+                        ],
+                        [
+                            -80.29,
+                            26.21
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.24b0ea93ecbbb3875d56284d5c3b20a8d59548bd.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.24b0ea93ecbbb3875d56284d5c3b20a8d59548bd.001.1",
+                "areaDesc": "Broward, FL",
+                "geocode": {
+                    "SAME": [
+                        "012011"
+                    ],
+                    "UGC": [
+                        "FLC011"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC011"
+                ],
+                "references": [],
+                "sent": "2026-11-17T22:56:00-05:00",
+                "effective": "2026-11-17T22:56:00-05:00",
+                "onset": "2026-11-17T22:56:00-05:00",
+                "expires": "2026-11-18T01:00:00-05:00",
+                "ends": "2026-11-18T01:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flash Flood Warning issued November 17 at 10:56PM EST until November 18 at 1:00AM EST by NWS Miami FL",
+                "description": "FFWMFL\n\nThe National Weather Service in Miami has issued a\n\n* Flash Flood Warning for...\nNorth Central Broward County in southeastern Florida...\n\n* Until 100 AM EST.\n\n* At 1056 PM EST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nDavie, Plantation, Sunrise, Weston, Sawgrass Mills Mall and Markham\nPark.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMFL 180356"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMFL.FF.W.0020.261118T0356Z-261118T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-18T01:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.820bc2ac8bde9ecbb9341cf086ecf8519e7bbd65.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.18,
+                            26.13
+                        ],
+                        [
+                            -80.13,
+                            26.11
+                        ],
+                        [
+                            -80.15,
+                            25.99
+                        ],
+                        [
+                            -80.19,
+                            25.97
+                        ],
+                        [
+                            -80.2,
+                            25.97
+                        ],
+                        [
+                            -80.21,
+                            26.01
+                        ],
+                        [
+                            -80.18,
+                            26.13
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.820bc2ac8bde9ecbb9341cf086ecf8519e7bbd65.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.820bc2ac8bde9ecbb9341cf086ecf8519e7bbd65.001.1",
+                "areaDesc": "Broward, FL",
+                "geocode": {
+                    "SAME": [
+                        "012011"
+                    ],
+                    "UGC": [
+                        "FLC011"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC011"
+                ],
+                "references": [],
+                "sent": "2026-11-17T22:40:00-05:00",
+                "effective": "2026-11-17T22:40:00-05:00",
+                "onset": "2026-11-17T22:40:00-05:00",
+                "expires": "2026-11-18T00:45:00-05:00",
+                "ends": "2026-11-18T00:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flash Flood Warning issued November 17 at 10:40PM EST until November 18 at 12:45AM EST by NWS Miami FL",
+                "description": "FFWMFL\n\nThe National Weather Service in Miami has issued a\n\n* Flash Flood Warning for...\nSouthern Broward County in southeastern Florida...\n\n* Until 1245 AM EST.\n\n* At 1040 PM EST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFort Lauderdale, Hollywood, Hallandale, Dania Beach, West Park,\nEstates Of Fort Lauderdale, Ravenswood Estates, Oak Point, Chambers\nEstates, Fort Lauderdale - Hollywood International Airport, Chula\nVista, Washington Park, Pembroke Park, Intersection I-595 And I-95,\nHollywood Downtown, Riverland Village and Boulevard Gardens.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMFL 180340"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMFL.FF.W.0019.261118T0340Z-261118T0545Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-18T00:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.25b11b5c2c6a7881a3d3a2e85fff05f0aa60e5ad.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.84,
+                            34.82
+                        ],
+                        [
+                            -111.91,
+                            34.8
+                        ],
+                        [
+                            -111.91,
+                            34.77
+                        ],
+                        [
+                            -111.9,
+                            34.76
+                        ],
+                        [
+                            -111.93,
+                            34.74
+                        ],
+                        [
+                            -111.93,
+                            34.71
+                        ],
+                        [
+                            -111.92,
+                            34.7
+                        ],
+                        [
+                            -111.93,
+                            34.69
+                        ],
+                        [
+                            -111.95,
+                            34.69
+                        ],
+                        [
+                            -111.96,
+                            34.68
+                        ],
+                        [
+                            -111.95,
+                            34.66
+                        ],
+                        [
+                            -111.93,
+                            34.66
+                        ],
+                        [
+                            -111.91,
+                            34.68
+                        ],
+                        [
+                            -111.89,
+                            34.68
+                        ],
+                        [
+                            -111.9,
+                            34.73
+                        ],
+                        [
+                            -111.89,
+                            34.73
+                        ],
+                        [
+                            -111.87,
+                            34.76
+                        ],
+                        [
+                            -111.88,
+                            34.77
+                        ],
+                        [
+                            -111.87,
+                            34.79
+                        ],
+                        [
+                            -111.84,
+                            34.8
+                        ],
+                        [
+                            -111.84,
+                            34.82
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.25b11b5c2c6a7881a3d3a2e85fff05f0aa60e5ad.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.25b11b5c2c6a7881a3d3a2e85fff05f0aa60e5ad.001.1",
+                "areaDesc": "Yavapai, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004025"
+                    ],
+                    "UGC": [
+                        "AZC025"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC025"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3a12fb8ef6c72f6c63f9c6a8d71fd86fbbc652f8.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.3a12fb8ef6c72f6c63f9c6a8d71fd86fbbc652f8.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-17T15:21:00-07:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4db0d7268c2eaf7158fcb271f859fef51a5a2076.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.4db0d7268c2eaf7158fcb271f859fef51a5a2076.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-17T16:14:00-07:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fe10e3626a6407ddf4cde773cba8b3aca0a385e2.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.fe10e3626a6407ddf4cde773cba8b3aca0a385e2.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-17T17:20:00-07:00"
+                    }
+                ],
+                "sent": "2026-11-17T20:14:00-07:00",
+                "effective": "2026-11-17T20:14:00-07:00",
+                "onset": "2026-11-17T20:14:00-07:00",
+                "expires": "2026-11-17T21:15:00-07:00",
+                "ends": "2026-11-17T21:15:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flash Flood Warning issued November 17 at 8:14PM MST until November 17 at 9:15PM MST by NWS Flagstaff AZ",
+                "description": "At 814 PM MST, the river guage along Oak Creek at Cornville has risen\nover 5 feet and now exceeds flood stage. Water levels are expected to\nrise around another foot, before falling later tonight. Flash\nflooding is already occurring.\n\nHAZARD...Life threatening flash flooding. Heavy rain producing flash\nflooding.\n\nSOURCE...River gauge reported.\n\nIMPACT...Life threatening flash flooding of Oak Creek.\n\nSome locations that will experience flash flooding include...\nCornville, Jordan, Page Springs and Bignotti.\n\nFor Oak Creek at Cornville:\nAt 8:00pm the stage was 8.24 feet.\nFlood Stage is 8.0 feet.\nForecast: A crest of 9.17 feet is expected at 9:00pm Tuesday.\nImpacts:\nAt 7.0 feet: Flooding begins to inundate lower terrace of RV park\nupstream of Page Springs Road Bridge.\nAt 8.0 feet: Flooding of lower terrace of RV park upstream of Page\nSprings Road Bridge.\nAt 9.0 feet: Hiking trails along banks of creek affected. Portions of\nresidential yards flooded.\n\nThis includes the following recreation areas and campgrounds...\nWindmill Park.\n\nThis includes the following swimming holes...\nMormons Crossing.\n\nThis includes the following creeks, washes and rivers...\nVerde River, Spring Creek, Oak Creek, Turkey Creek and Dry Creek.",
+                "instruction": "Move to higher ground now. Act quickly to protect your life.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nStay away or be swept away! The banks of creeks and washes are\nunstable and unsafe during any flooding event.\n\nLow water crossings will become dangerous in heavy rain. Do not\nattempt to cross flooded roads. Find an alternate route.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KFGZ 180314"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 915 PM MST THIS EVENING FOR OAK CREEK NEAR PAGE SPRINGS AND CORNVILLE"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KFGZ.FF.W.0220.000000T0000Z-261118T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-17T21:15:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5574d4811b29f2f60371ca9ebaac2711999bfe6e.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.2,
+                            25.97
+                        ],
+                        [
+                            -80.3,
+                            25.97
+                        ],
+                        [
+                            -80.31,
+                            26.08
+                        ],
+                        [
+                            -80.21,
+                            26.01
+                        ],
+                        [
+                            -80.2,
+                            25.97
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5574d4811b29f2f60371ca9ebaac2711999bfe6e.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5574d4811b29f2f60371ca9ebaac2711999bfe6e.001.1",
+                "areaDesc": "Broward, FL",
+                "geocode": {
+                    "SAME": [
+                        "012011"
+                    ],
+                    "UGC": [
+                        "FLC011"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC011"
+                ],
+                "references": [],
+                "sent": "2026-11-17T21:49:00-05:00",
+                "effective": "2026-11-17T21:49:00-05:00",
+                "onset": "2026-11-17T21:49:00-05:00",
+                "expires": "2026-11-17T23:15:00-05:00",
+                "ends": "2026-11-17T23:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flash Flood Warning issued November 17 at 9:49PM EST until November 17 at 11:15PM EST by NWS Miami FL",
+                "description": "FFWMFL\n\nThe National Weather Service in Miami has issued a\n\n* Flash Flood Warning for...\nSouthern Broward County in southeastern Florida...\n\n* Until 1115 PM EST.\n\n* At 949 PM EST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 2 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPembroke Pines, Miramar, Cooper City, West Park, Royal Palm\nRanches, Miramar Parkway And University Drive and Sunshine Acres.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMFL 180249"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMFL.FF.W.0018.261118T0249Z-261118T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-17T23:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3b9450248b09d17d46bca635add68ce1d2af311b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.29,
+                            26.21
+                        ],
+                        [
+                            -80.18,
+                            26.14
+                        ],
+                        [
+                            -80.21,
+                            26.01
+                        ],
+                        [
+                            -80.31,
+                            26.08
+                        ],
+                        [
+                            -80.3,
+                            26.12
+                        ],
+                        [
+                            -80.29,
+                            26.21
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3b9450248b09d17d46bca635add68ce1d2af311b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3b9450248b09d17d46bca635add68ce1d2af311b.001.1",
+                "areaDesc": "Broward, FL",
+                "geocode": {
+                    "SAME": [
+                        "012011"
+                    ],
+                    "UGC": [
+                        "FLC011"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC011"
+                ],
+                "references": [],
+                "sent": "2026-11-17T21:31:00-05:00",
+                "effective": "2026-11-17T21:31:00-05:00",
+                "onset": "2026-11-17T21:31:00-05:00",
+                "expires": "2026-11-17T23:30:00-05:00",
+                "ends": "2026-11-17T23:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flash Flood Warning issued November 17 at 9:31PM EST until November 17 at 11:30PM EST by NWS Miami FL",
+                "description": "FFWMFL\n\nThe National Weather Service in Miami has issued a\n\n* Flash Flood Warning for...\nSouthern Broward County in southeastern Florida...\n\n* Until 1130 PM EST.\n\n* At 931 PM EST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 2 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHollywood, Davie, Plantation, Sunrise, Lauderhill, Cooper City,\nNova Southeastern University, Pine Island Ridge, Broadview Park,\nMelrose Park, St. George, Washington Park, Chambers Estates,\nDowntown Davie and Broward Estates.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMFL 180231"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMFL.FF.W.0017.261118T0231Z-261118T0430Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-17T23:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.054faad23da4bbede0270541d904538455eb7a06.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.2,
+                            25.97
+                        ],
+                        [
+                            -80.19,
+                            25.9
+                        ],
+                        [
+                            -80.27,
+                            25.87
+                        ],
+                        [
+                            -80.29,
+                            25.97
+                        ],
+                        [
+                            -80.2,
+                            25.97
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.054faad23da4bbede0270541d904538455eb7a06.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.054faad23da4bbede0270541d904538455eb7a06.001.1",
+                "areaDesc": "Miami-Dade, FL",
+                "geocode": {
+                    "SAME": [
+                        "012086"
+                    ],
+                    "UGC": [
+                        "FLC086"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC086"
+                ],
+                "references": [],
+                "sent": "2026-11-17T21:22:00-05:00",
+                "effective": "2026-11-17T21:22:00-05:00",
+                "onset": "2026-11-17T21:22:00-05:00",
+                "expires": "2026-11-17T23:15:00-05:00",
+                "ends": "2026-11-17T23:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flash Flood Warning issued November 17 at 9:22PM EST until November 17 at 11:15PM EST by NWS Miami FL",
+                "description": "FFWMFL\n\nThe National Weather Service in Miami has issued a\n\n* Flash Flood Warning for...\nNorthern Miami-Dade County in southeastern Florida...\n\n* Until 1115 PM EST.\n\n* At 922 PM EST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMiami Gardens, North Miami, Opa-Locka, Hard Rock Stadium, Golden\nGlades, Westview and Saint Thomas University.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMFL 180222"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMFL.FF.W.0016.261118T0222Z-261118T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-17T23:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-18T04:07:25+00:00"
+}

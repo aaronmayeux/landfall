@@ -1,0 +1,33 @@
+en Español
+
+000
+ABPZ20 KNHC 082333
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+400 PM PST Sun Nov 8 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Pena, located several hundred miles south of the Big Island of 
+Hawaii.
+
+Eastern East Pacific (EP96):
+An area of low pressure located just offshore of Nicaragua has been 
+producing increasingly organized shower and thunderstorm activity 
+over the past several hours. Some additional development of this 
+system is possible through early Monday while it drifts slowly 
+northwestward. Thereafter, environmental conditions are forecast to 
+become unfavorable for further development as the system turns 
+westward away from land. Regardless of development, this system is 
+expected to bring periods of heavy rain to portions of Central 
+America through tonight.
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...low...30 percent.
+
+$$
+Forecaster Pierce/Gibbs
+  

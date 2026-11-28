@@ -1,0 +1,27 @@
+en Español
+
+000
+ABPZ20 KNHC 242320
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+400 PM PST Tue Nov 24 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Western Central Pacific (CP96):
+An area of low pressure located over a thousand miles southwest of 
+the Hawaiian Islands continues to produce a broad area of 
+disorganized showers and thunderstorms. Recent satellite wind data 
+indicates the system does not yet have a well defined center and is 
+producing winds of 30 to 35 mph. However, environmental conditions 
+appear conducive for some additional development of this system over 
+the next day or so before upper-level winds become unfavorable by 
+the end of the week.
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...low...30 percent.
+
+$$
+Forecaster Papin/Evans
+  

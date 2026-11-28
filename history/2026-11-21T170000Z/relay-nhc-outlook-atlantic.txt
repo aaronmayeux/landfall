@@ -1,0 +1,42 @@
+en Español
+
+000
+ABNT20 KNHC 211154
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+700 AM EST Sat Nov 21 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Offshore of the Southeast U.S. Coast:
+A large non-tropical low pressure area centered a few hundred miles 
+east of northeastern Florida continues to produce disorganized 
+showers and thunderstorms. The system is moving into an 
+environment that will probably not be conducive for development of 
+significant tropical or subtropical characteristics. 
+
+Although the chances of tropical development continue to decrease, 
+this large weather system is still expected to produce gusty winds, 
+dangerous surf, rip currents, and coastal flooding along portions 
+of the southeast and mid-Atlantic U.S. coasts into early next week. 
+In addition, heavy rainfall and the threat of flash flooding will 
+move northward over coastal portions of the Carolinas and the 
+mid-Atlantic through the weekend. Interests along the U.S. 
+East Coast should continue to monitor the progress of this system. 
+Additional information on this system, including Gale Warnings, can 
+be found in High Seas Forecasts issued by the National Weather 
+Service, as well as products issued by your local National Weather 
+Service forecast office.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...10 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Katz/Blake
+  

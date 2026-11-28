@@ -1,0 +1,217 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6c94cfd7370c7366032fa3cb79fb2fd2bc30d283.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6c94cfd7370c7366032fa3cb79fb2fd2bc30d283.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6c94cfd7370c7366032fa3cb79fb2fd2bc30d283.001.1",
+                "areaDesc": "Metro Palm Beach County; Coastal Palm Beach County",
+                "geocode": {
+                    "SAME": [
+                        "012099"
+                    ],
+                    "UGC": [
+                        "FLZ068",
+                        "FLZ168"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ068",
+                    "https://api.weather.gov/zones/forecast/FLZ168"
+                ],
+                "references": [],
+                "sent": "2026-11-16T15:34:00-05:00",
+                "effective": "2026-11-16T15:34:00-05:00",
+                "onset": "2026-11-17T17:00:00-05:00",
+                "expires": "2026-11-16T23:45:00-05:00",
+                "ends": "2026-11-19T19:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Miami FL",
+                "headline": "Flood Watch issued November 16 at 3:34PM EST until November 19 at 7:00PM EST by NWS Miami FL",
+                "description": "Multiple rounds of storms along coastal and metro Palm Beach County.\nStorms may remain pinned over the same area for several hours,\nincreasing the chances for flash flooding.\n\n* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of southeast Florida, including the following\nareas, Coastal Palm Beach County and Metro Palm Beach County.\n\n* WHEN...From Tuesday afternoon through Thursday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Several rounds of storms may produce rainfall amounts of 2 to 4\ninches  through Thursday afternoon. Higher amounts of 6 to 8\ninches with locally isolated amounts up to 10 inches may be\npossible. Heavy rainfall rates of 1 to 2 inches per hour may\nobserved with some of these storms.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMFL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMFL 162034"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM TUESDAY AFTERNOON THROUGH THURSDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMFL.FA.A.0003.261117T2200Z-261120T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-19T19:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8c11a51fff36cca6e5c7d021e392a554c3802420.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8c11a51fff36cca6e5c7d021e392a554c3802420.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.8c11a51fff36cca6e5c7d021e392a554c3802420.001.1",
+                "areaDesc": "Inland Volusia; Orange; Seminole; Osceola; Okeechobee; Coastal Volusia; Coastal Indian River; Coastal St. Lucie; Coastal Martin; Inland Northern Brevard; Inland Indian River; Inland St. Lucie; Inland Martin; Mainland Northern Brevard; Northern Brevard Barrier Islands; Inland Southern Brevard; Mainland Southern Brevard; Southern Brevard Barrier Islands",
+                "geocode": {
+                    "SAME": [
+                        "012127",
+                        "012095",
+                        "012117",
+                        "012097",
+                        "012093",
+                        "012061",
+                        "012111",
+                        "012085",
+                        "012009"
+                    ],
+                    "UGC": [
+                        "FLZ041",
+                        "FLZ045",
+                        "FLZ046",
+                        "FLZ053",
+                        "FLZ058",
+                        "FLZ141",
+                        "FLZ154",
+                        "FLZ159",
+                        "FLZ164",
+                        "FLZ247",
+                        "FLZ254",
+                        "FLZ259",
+                        "FLZ264",
+                        "FLZ347",
+                        "FLZ447",
+                        "FLZ547",
+                        "FLZ647",
+                        "FLZ747"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ041",
+                    "https://api.weather.gov/zones/forecast/FLZ045",
+                    "https://api.weather.gov/zones/forecast/FLZ046",
+                    "https://api.weather.gov/zones/forecast/FLZ053",
+                    "https://api.weather.gov/zones/forecast/FLZ058",
+                    "https://api.weather.gov/zones/forecast/FLZ141",
+                    "https://api.weather.gov/zones/forecast/FLZ154",
+                    "https://api.weather.gov/zones/forecast/FLZ159",
+                    "https://api.weather.gov/zones/forecast/FLZ164",
+                    "https://api.weather.gov/zones/forecast/FLZ247",
+                    "https://api.weather.gov/zones/forecast/FLZ254",
+                    "https://api.weather.gov/zones/forecast/FLZ259",
+                    "https://api.weather.gov/zones/forecast/FLZ264",
+                    "https://api.weather.gov/zones/forecast/FLZ347",
+                    "https://api.weather.gov/zones/forecast/FLZ447",
+                    "https://api.weather.gov/zones/forecast/FLZ547",
+                    "https://api.weather.gov/zones/forecast/FLZ647",
+                    "https://api.weather.gov/zones/forecast/FLZ747"
+                ],
+                "references": [],
+                "sent": "2026-11-16T15:18:00-05:00",
+                "effective": "2026-11-16T15:18:00-05:00",
+                "onset": "2026-11-17T17:00:00-05:00",
+                "expires": "2026-11-20T19:00:00-05:00",
+                "ends": "2026-11-20T19:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flood Watch issued November 16 at 3:18PM EST until November 20 at 7:00PM EST by NWS Melbourne FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...Most of east central Florida, including Volusia, Seminole,\nOrange, Osceola, Okeechobee, Brevard, Indian River, Saint Lucie,\nand Martin counties.\n\n* WHEN...From Tuesday afternoon through Friday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Repeated rounds of showers and isolated storms are forecast\nthrough Friday. Rainfall amounts of 3 to 6 inches are forecast\nwith localized higher amounts of 8 to 12 inches. The greatest\npotential for these higher amounts will be over the coastal\ncounties.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMLB 162018"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM TUESDAY AFTERNOON THROUGH FRIDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMLB.FA.A.0004.261117T2200Z-261121T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-20T19:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-11-16T20:52:10+00:00"
+}

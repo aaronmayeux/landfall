@@ -1,0 +1,209 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.89f4d9b254d136fd17aafadeca90f6ed9ad9dd66.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -78.31,
+                            35.89
+                        ],
+                        [
+                            -78.18,
+                            36.04
+                        ],
+                        [
+                            -78.02,
+                            36.12
+                        ],
+                        [
+                            -77.79,
+                            36.16
+                        ],
+                        [
+                            -77.5,
+                            36.17
+                        ],
+                        [
+                            -77.3,
+                            36.09
+                        ],
+                        [
+                            -77.41,
+                            36
+                        ],
+                        [
+                            -77.34,
+                            35.91
+                        ],
+                        [
+                            -77.35,
+                            35.82
+                        ],
+                        [
+                            -77.47,
+                            35.8
+                        ],
+                        [
+                            -77.82,
+                            35.57
+                        ],
+                        [
+                            -77.83,
+                            35.43
+                        ],
+                        [
+                            -77.8,
+                            35.38
+                        ],
+                        [
+                            -77.83,
+                            35.18
+                        ],
+                        [
+                            -77.89,
+                            35.15
+                        ],
+                        [
+                            -78.02,
+                            35.19
+                        ],
+                        [
+                            -78.12,
+                            35.18
+                        ],
+                        [
+                            -78.29,
+                            35.51
+                        ],
+                        [
+                            -78.34,
+                            35.77
+                        ],
+                        [
+                            -78.26,
+                            35.82
+                        ],
+                        [
+                            -78.31,
+                            35.89
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.89f4d9b254d136fd17aafadeca90f6ed9ad9dd66.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.89f4d9b254d136fd17aafadeca90f6ed9ad9dd66.001.1",
+                "areaDesc": "Edgecombe, NC; Franklin, NC; Halifax, NC; Johnston, NC; Nash, NC; Wayne, NC; Wilson, NC",
+                "geocode": {
+                    "SAME": [
+                        "037065",
+                        "037069",
+                        "037083",
+                        "037101",
+                        "037127",
+                        "037191",
+                        "037195"
+                    ],
+                    "UGC": [
+                        "NCC065",
+                        "NCC069",
+                        "NCC083",
+                        "NCC101",
+                        "NCC127",
+                        "NCC191",
+                        "NCC195"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NCC065",
+                    "https://api.weather.gov/zones/county/NCC069",
+                    "https://api.weather.gov/zones/county/NCC083",
+                    "https://api.weather.gov/zones/county/NCC101",
+                    "https://api.weather.gov/zones/county/NCC127",
+                    "https://api.weather.gov/zones/county/NCC191",
+                    "https://api.weather.gov/zones/county/NCC195"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c99db392e05bdf086982a4b1f030d9239e53da24.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.c99db392e05bdf086982a4b1f030d9239e53da24.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-26T04:40:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-26T06:16:00-05:00",
+                "effective": "2026-11-26T06:16:00-05:00",
+                "onset": "2026-11-26T06:16:00-05:00",
+                "expires": "2026-11-26T10:45:00-05:00",
+                "ends": "2026-11-26T10:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Raleigh NC",
+                "headline": "Flash Flood Warning issued November 26 at 6:16AM EST until November 26 at 10:45AM EST by NWS Raleigh NC",
+                "description": "FFWRAH\n\nThe National Weather Service in Raleigh has extended the\n\n* Flash Flood Warning for...\nEdgecombe County in central North Carolina...\nSoutheastern Franklin County in central North Carolina...\nSouthern Halifax County in central North Carolina...\nEastern Johnston County in central North Carolina...\nNash County in central North Carolina...\nWayne County in central North Carolina...\nWilson County in central North Carolina...\n\n* Until 1045 AM EST.\n\n* At 616 AM EST, Doppler radar continued to indicate thunderstorms\nproducing heavy rain across the warned area. Between 3 and 5 inches\nof rain have fallen. Additional rainfall amounts of 1 to 3 inches\nare possible in the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nRocky Mount, Goldsboro, Tarboro, Nashville, Mount Olive, Wilson,\nScotland Neck, Elm City, Fremont, Dortches, Walnut Creek, Bailey,\nBunn, Micro, Selma, Red Oak, Princeville, Sharpsburg, Pine Level\nand Pinetops.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWRAH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KRAH 261116"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KRAH.FF.W.0044.000000T0000Z-261126T1545Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-26T10:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-11-26T14:54:53+00:00"
+}

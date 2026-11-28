@@ -1,0 +1,924 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ee802e24a0192538baed2025102d207023630629.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ee802e24a0192538baed2025102d207023630629.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ee802e24a0192538baed2025102d207023630629.001.1",
+                "areaDesc": "Northampton; Hertford; Gates; Pasquotank; Camden; Western Currituck; Bertie; Chowan; Perquimans; Eastern Currituck; Fluvanna; Prince Edward; Cumberland; Goochland; Caroline; Mecklenburg; Lunenburg; Nottoway; Amelia; Powhatan; Brunswick; Dinwiddie; Prince George; Charles City; New Kent; Greensville; Sussex; Surry; James City; Southampton; Chesapeake; Virginia Beach; Western Louisa; Eastern Louisa; Western Hanover; Eastern Hanover; Western Chesterfield; Eastern Chesterfield (Including Col. Heights); Western Henrico (Including the City of Richmond); Eastern Henrico; York; Newport News; Hampton/Poquoson; Isle of Wight; Suffolk; Norfolk; Portsmouth",
+                "geocode": {
+                    "SAME": [
+                        "037131",
+                        "037091",
+                        "037073",
+                        "037139",
+                        "037029",
+                        "037053",
+                        "037015",
+                        "037041",
+                        "037143",
+                        "051065",
+                        "051147",
+                        "051049",
+                        "051075",
+                        "051033",
+                        "051117",
+                        "051111",
+                        "051135",
+                        "051007",
+                        "051145",
+                        "051025",
+                        "051053",
+                        "051149",
+                        "051670",
+                        "051730",
+                        "051036",
+                        "051127",
+                        "051081",
+                        "051595",
+                        "051183",
+                        "051181",
+                        "051095",
+                        "051830",
+                        "051175",
+                        "051620",
+                        "051550",
+                        "051810",
+                        "051109",
+                        "051085",
+                        "051041",
+                        "051570",
+                        "051087",
+                        "051760",
+                        "051199",
+                        "051735",
+                        "051700",
+                        "051650",
+                        "051093",
+                        "051800",
+                        "051710",
+                        "051740"
+                    ],
+                    "UGC": [
+                        "NCZ012",
+                        "NCZ013",
+                        "NCZ014",
+                        "NCZ015",
+                        "NCZ016",
+                        "NCZ017",
+                        "NCZ030",
+                        "NCZ031",
+                        "NCZ032",
+                        "NCZ102",
+                        "VAZ048",
+                        "VAZ060",
+                        "VAZ061",
+                        "VAZ062",
+                        "VAZ064",
+                        "VAZ065",
+                        "VAZ066",
+                        "VAZ067",
+                        "VAZ068",
+                        "VAZ069",
+                        "VAZ079",
+                        "VAZ080",
+                        "VAZ081",
+                        "VAZ082",
+                        "VAZ083",
+                        "VAZ087",
+                        "VAZ088",
+                        "VAZ089",
+                        "VAZ090",
+                        "VAZ092",
+                        "VAZ097",
+                        "VAZ098",
+                        "VAZ509",
+                        "VAZ510",
+                        "VAZ511",
+                        "VAZ512",
+                        "VAZ513",
+                        "VAZ514",
+                        "VAZ515",
+                        "VAZ516",
+                        "VAZ523",
+                        "VAZ524",
+                        "VAZ525",
+                        "VAZ528",
+                        "VAZ529",
+                        "VAZ530",
+                        "VAZ531"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NCZ012",
+                    "https://api.weather.gov/zones/forecast/NCZ013",
+                    "https://api.weather.gov/zones/forecast/NCZ014",
+                    "https://api.weather.gov/zones/forecast/NCZ015",
+                    "https://api.weather.gov/zones/forecast/NCZ016",
+                    "https://api.weather.gov/zones/forecast/NCZ017",
+                    "https://api.weather.gov/zones/forecast/NCZ030",
+                    "https://api.weather.gov/zones/forecast/NCZ031",
+                    "https://api.weather.gov/zones/forecast/NCZ032",
+                    "https://api.weather.gov/zones/forecast/NCZ102",
+                    "https://api.weather.gov/zones/forecast/VAZ048",
+                    "https://api.weather.gov/zones/forecast/VAZ060",
+                    "https://api.weather.gov/zones/forecast/VAZ061",
+                    "https://api.weather.gov/zones/forecast/VAZ062",
+                    "https://api.weather.gov/zones/forecast/VAZ064",
+                    "https://api.weather.gov/zones/forecast/VAZ065",
+                    "https://api.weather.gov/zones/forecast/VAZ066",
+                    "https://api.weather.gov/zones/forecast/VAZ067",
+                    "https://api.weather.gov/zones/forecast/VAZ068",
+                    "https://api.weather.gov/zones/forecast/VAZ069",
+                    "https://api.weather.gov/zones/forecast/VAZ079",
+                    "https://api.weather.gov/zones/forecast/VAZ080",
+                    "https://api.weather.gov/zones/forecast/VAZ081",
+                    "https://api.weather.gov/zones/forecast/VAZ082",
+                    "https://api.weather.gov/zones/forecast/VAZ083",
+                    "https://api.weather.gov/zones/forecast/VAZ087",
+                    "https://api.weather.gov/zones/forecast/VAZ088",
+                    "https://api.weather.gov/zones/forecast/VAZ089",
+                    "https://api.weather.gov/zones/forecast/VAZ090",
+                    "https://api.weather.gov/zones/forecast/VAZ092",
+                    "https://api.weather.gov/zones/forecast/VAZ097",
+                    "https://api.weather.gov/zones/forecast/VAZ098",
+                    "https://api.weather.gov/zones/forecast/VAZ509",
+                    "https://api.weather.gov/zones/forecast/VAZ510",
+                    "https://api.weather.gov/zones/forecast/VAZ511",
+                    "https://api.weather.gov/zones/forecast/VAZ512",
+                    "https://api.weather.gov/zones/forecast/VAZ513",
+                    "https://api.weather.gov/zones/forecast/VAZ514",
+                    "https://api.weather.gov/zones/forecast/VAZ515",
+                    "https://api.weather.gov/zones/forecast/VAZ516",
+                    "https://api.weather.gov/zones/forecast/VAZ523",
+                    "https://api.weather.gov/zones/forecast/VAZ524",
+                    "https://api.weather.gov/zones/forecast/VAZ525",
+                    "https://api.weather.gov/zones/forecast/VAZ528",
+                    "https://api.weather.gov/zones/forecast/VAZ529",
+                    "https://api.weather.gov/zones/forecast/VAZ530",
+                    "https://api.weather.gov/zones/forecast/VAZ531"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9f3d7f96b59b08a530ba5a239b1f2d85a2d34235.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9f3d7f96b59b08a530ba5a239b1f2d85a2d34235.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-25T21:40:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-26T05:34:00-05:00",
+                "effective": "2026-11-26T05:34:00-05:00",
+                "onset": "2026-11-26T05:34:00-05:00",
+                "expires": "2026-11-26T13:00:00-05:00",
+                "ends": "2026-11-26T13:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flood Watch issued November 26 at 5:34AM EST until November 26 at 1:00PM EST by NWS Wakefield VA",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of northeast North Carolina, including the\nfollowing areas, Bertie, Camden, Chowan, Eastern Currituck, Gates,\nHertford, Northampton, Pasquotank, Perquimans and Western Currituck\nand Virginia, including the following areas, Amelia, Brunswick,\nCaroline, Charles City, Chesapeake, Cumberland, Dinwiddie, Eastern\nChesterfield (Including Col. Heights), Eastern Hanover, Eastern\nHenrico, Eastern Louisa, Fluvanna, Goochland, Greensville,\nHampton/Poquoson, Isle of Wight, James City, Lunenburg,\nMecklenburg, New Kent, Newport News, Norfolk, Nottoway, Portsmouth,\nPowhatan, Prince Edward, Prince George (including Hopewell and\nPetersburg), Southampton, Suffolk, Surry, Sussex, Virginia Beach,\nWestern Chesterfield, Western Hanover, Western Henrico (Including\nthe City of Richmond), Western Louisa and York.\n\n* WHEN...Until 1 PM EST this afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- Moderate to heavy rainfall continues this morning with precip\nending from southwest to northeast this afternoon.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KAKQ 261034"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 1 PM EST THIS AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KAKQ.FA.A.0007.000000T0000Z-261126T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-26T13:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.13b5db38e3e057a0549e02d0b8e05fc5699d4245.002.1,2026-11-25T11:20:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.13b5db38e3e057a0549e02d0b8e05fc5699d4245.001.1,2026-11-25T11:20:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.904243850e91c30cc0ee5731cf3f29c8a42c7120.001.1,2026-11-25T09:48:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6aca799ea7c8fa16f10bc3f5578171799d87c7b4.001.1,2026-11-25T01:49:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ee802e24a0192538baed2025102d207023630629.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ee802e24a0192538baed2025102d207023630629.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ee802e24a0192538baed2025102d207023630629.002.1",
+                "areaDesc": "Dorchester; Wicomico; Somerset; Inland Worcester; Maryland Beaches; Westmoreland; Richmond; Northumberland; Lancaster; Gloucester; Middlesex; Mathews; Accomack; Northampton; Western King William; Eastern King William; Western King and Queen; Eastern King and Queen; Western Essex; Eastern Essex",
+                "geocode": {
+                    "SAME": [
+                        "024019",
+                        "024045",
+                        "024039",
+                        "024047",
+                        "051193",
+                        "051159",
+                        "051133",
+                        "051103",
+                        "051073",
+                        "051119",
+                        "051115",
+                        "051001",
+                        "051131",
+                        "051101",
+                        "051097",
+                        "051057"
+                    ],
+                    "UGC": [
+                        "MDZ021",
+                        "MDZ022",
+                        "MDZ023",
+                        "MDZ024",
+                        "MDZ025",
+                        "VAZ075",
+                        "VAZ076",
+                        "VAZ077",
+                        "VAZ078",
+                        "VAZ084",
+                        "VAZ085",
+                        "VAZ086",
+                        "VAZ099",
+                        "VAZ100",
+                        "VAZ517",
+                        "VAZ518",
+                        "VAZ519",
+                        "VAZ520",
+                        "VAZ521",
+                        "VAZ522"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/MDZ021",
+                    "https://api.weather.gov/zones/forecast/MDZ022",
+                    "https://api.weather.gov/zones/forecast/MDZ023",
+                    "https://api.weather.gov/zones/forecast/MDZ024",
+                    "https://api.weather.gov/zones/forecast/MDZ025",
+                    "https://api.weather.gov/zones/forecast/VAZ075",
+                    "https://api.weather.gov/zones/forecast/VAZ076",
+                    "https://api.weather.gov/zones/forecast/VAZ077",
+                    "https://api.weather.gov/zones/forecast/VAZ078",
+                    "https://api.weather.gov/zones/forecast/VAZ084",
+                    "https://api.weather.gov/zones/forecast/VAZ085",
+                    "https://api.weather.gov/zones/forecast/VAZ086",
+                    "https://api.weather.gov/zones/forecast/VAZ099",
+                    "https://api.weather.gov/zones/forecast/VAZ100",
+                    "https://api.weather.gov/zones/forecast/VAZ517",
+                    "https://api.weather.gov/zones/forecast/VAZ518",
+                    "https://api.weather.gov/zones/forecast/VAZ519",
+                    "https://api.weather.gov/zones/forecast/VAZ520",
+                    "https://api.weather.gov/zones/forecast/VAZ521",
+                    "https://api.weather.gov/zones/forecast/VAZ522"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9f3d7f96b59b08a530ba5a239b1f2d85a2d34235.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9f3d7f96b59b08a530ba5a239b1f2d85a2d34235.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-25T21:40:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-26T05:34:00-05:00",
+                "effective": "2026-11-26T05:34:00-05:00",
+                "onset": "2026-11-26T05:34:00-05:00",
+                "expires": "2026-11-26T16:00:00-05:00",
+                "ends": "2026-11-26T16:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flood Watch issued November 26 at 5:34AM EST until November 26 at 4:00PM EST by NWS Wakefield VA",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of southeast Maryland, including the following\nareas, Dorchester, Inland Worcester, Maryland Beaches, Somerset and\nWicomico and Virginia, including the following areas, Accomack,\nEastern Essex, Eastern King William, Eastern King and Queen,\nGloucester, Lancaster, Mathews, Middlesex, Northampton,\nNorthumberland, Richmond, Western Essex, Western King William,\nWestern King and Queen and Westmoreland.\n\n* WHEN...Until 4 PM EST this afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- Moderate to heavy rainfall continues this morning with precip\nending from southwest to northeast this afternoon.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KAKQ 261034"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 4 PM EST THIS AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KAKQ.FA.A.0007.000000T0000Z-261126T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-26T16:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.13b5db38e3e057a0549e02d0b8e05fc5699d4245.003.1,2026-11-25T11:20:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.904243850e91c30cc0ee5731cf3f29c8a42c7120.002.1,2026-11-25T09:48:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6aca799ea7c8fa16f10bc3f5578171799d87c7b4.002.1,2026-11-25T01:49:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bdd72bb42247977408dd0b795890229a85848657.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bdd72bb42247977408dd0b795890229a85848657.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.bdd72bb42247977408dd0b795890229a85848657.002.1",
+                "areaDesc": "Stokes; Rockingham; Caswell; Floyd; Roanoke; Botetourt; Rockbridge; Patrick; Franklin; Bedford; Amherst; Henry; Pittsylvania; Campbell; Appomattox; Buckingham; Halifax; Charlotte",
+                "geocode": {
+                    "SAME": [
+                        "037169",
+                        "037157",
+                        "037033",
+                        "051063",
+                        "051161",
+                        "051770",
+                        "051775",
+                        "051023",
+                        "051163",
+                        "051530",
+                        "051678",
+                        "051141",
+                        "051067",
+                        "051019",
+                        "051009",
+                        "051089",
+                        "051690",
+                        "051143",
+                        "051590",
+                        "051031",
+                        "051680",
+                        "051011",
+                        "051029",
+                        "051083",
+                        "051037"
+                    ],
+                    "UGC": [
+                        "NCZ004",
+                        "NCZ005",
+                        "NCZ006",
+                        "VAZ017",
+                        "VAZ022",
+                        "VAZ023",
+                        "VAZ024",
+                        "VAZ032",
+                        "VAZ033",
+                        "VAZ034",
+                        "VAZ035",
+                        "VAZ043",
+                        "VAZ044",
+                        "VAZ045",
+                        "VAZ046",
+                        "VAZ047",
+                        "VAZ058",
+                        "VAZ059"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NCZ004",
+                    "https://api.weather.gov/zones/forecast/NCZ005",
+                    "https://api.weather.gov/zones/forecast/NCZ006",
+                    "https://api.weather.gov/zones/forecast/VAZ017",
+                    "https://api.weather.gov/zones/forecast/VAZ022",
+                    "https://api.weather.gov/zones/forecast/VAZ023",
+                    "https://api.weather.gov/zones/forecast/VAZ024",
+                    "https://api.weather.gov/zones/forecast/VAZ032",
+                    "https://api.weather.gov/zones/forecast/VAZ033",
+                    "https://api.weather.gov/zones/forecast/VAZ034",
+                    "https://api.weather.gov/zones/forecast/VAZ035",
+                    "https://api.weather.gov/zones/forecast/VAZ043",
+                    "https://api.weather.gov/zones/forecast/VAZ044",
+                    "https://api.weather.gov/zones/forecast/VAZ045",
+                    "https://api.weather.gov/zones/forecast/VAZ046",
+                    "https://api.weather.gov/zones/forecast/VAZ047",
+                    "https://api.weather.gov/zones/forecast/VAZ058",
+                    "https://api.weather.gov/zones/forecast/VAZ059"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d28df3308aa7bbdfb7f056d7945f4c08fa3d4024.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.d28df3308aa7bbdfb7f056d7945f4c08fa3d4024.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-25T20:57:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-26T02:14:00-05:00",
+                "effective": "2026-11-26T02:14:00-05:00",
+                "onset": "2026-11-26T02:14:00-05:00",
+                "expires": "2026-11-26T10:15:00-05:00",
+                "ends": "2026-11-26T16:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Blacksburg VA",
+                "headline": "Flood Watch issued November 26 at 2:14AM EST until November 26 at 4:00PM EST by NWS Blacksburg VA",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of north central North Carolina, including the\nfollowing counties, Caswell, Rockingham and Stokes and Virginia,\nincluding the following counties, Amherst, Appomattox, Bedford,\nBotetourt, Buckingham, Campbell, Charlotte, Floyd, Franklin,\nHalifax, Henry, Patrick, Pittsylvania, Roanoke and Rockbridge.\n\n* WHEN...Through this afternoon.\n\n* IMPACTS...Excessive runoff may result in poor drainage flooding,\nespecially where leaves have filled road-side ditches, and water\ngets diverted onto the highway. Stream levels were at all time lows\nprior to this rain event, but still watch for sudden rises on area\ncreeks, streams and rivers. Also monitor for flooding in urban\nareas. Storm drains may become clogged with debris causing flooding\nof the surrounding area.\n\n* ADDITIONAL DETAILS...\n- Rain will be moderate to heavy at times and lead to nuisance\nflooding in poor drainage and leaf clogged drains through this\nevening. Widespread rainfall totals of 1 to 3 inches are\nexpected, with localized higher totals for favored upslope\nlocations along the Blue Ridge from Poor Mountain near Roanoke,\nnorthward toward the Peaks of Otter.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFARNK"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KRNK 260714"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH THIS AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KRNK.FA.A.0010.000000T0000Z-261126T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-26T16:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.3948e468c875b5df93e9acdd32b82b4e9f189b70.001.1,2026-11-25T11:28:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.234d3f1f57cf18e2e4ae0ae8ab48e99b3f2041fd.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.234d3f1f57cf18e2e4ae0ae8ab48e99b3f2041fd.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.234d3f1f57cf18e2e4ae0ae8ab48e99b3f2041fd.001.1",
+                "areaDesc": "Person; Granville; Vance; Warren; Halifax; Forsyth; Guilford; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Randolph; Chatham; Wake; Johnston; Wilson; Moore; Lee; Harnett; Wayne; Hoke; Cumberland; Sampson",
+                "geocode": {
+                    "SAME": [
+                        "037145",
+                        "037077",
+                        "037181",
+                        "037185",
+                        "037083",
+                        "037067",
+                        "037081",
+                        "037001",
+                        "037135",
+                        "037063",
+                        "037069",
+                        "037127",
+                        "037065",
+                        "037151",
+                        "037037",
+                        "037183",
+                        "037101",
+                        "037195",
+                        "037125",
+                        "037105",
+                        "037085",
+                        "037191",
+                        "037093",
+                        "037051",
+                        "037163"
+                    ],
+                    "UGC": [
+                        "NCZ007",
+                        "NCZ008",
+                        "NCZ009",
+                        "NCZ010",
+                        "NCZ011",
+                        "NCZ021",
+                        "NCZ022",
+                        "NCZ023",
+                        "NCZ024",
+                        "NCZ025",
+                        "NCZ026",
+                        "NCZ027",
+                        "NCZ028",
+                        "NCZ039",
+                        "NCZ040",
+                        "NCZ041",
+                        "NCZ042",
+                        "NCZ043",
+                        "NCZ075",
+                        "NCZ076",
+                        "NCZ077",
+                        "NCZ078",
+                        "NCZ086",
+                        "NCZ088",
+                        "NCZ089"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NCZ007",
+                    "https://api.weather.gov/zones/forecast/NCZ008",
+                    "https://api.weather.gov/zones/forecast/NCZ009",
+                    "https://api.weather.gov/zones/forecast/NCZ010",
+                    "https://api.weather.gov/zones/forecast/NCZ011",
+                    "https://api.weather.gov/zones/forecast/NCZ021",
+                    "https://api.weather.gov/zones/forecast/NCZ022",
+                    "https://api.weather.gov/zones/forecast/NCZ023",
+                    "https://api.weather.gov/zones/forecast/NCZ024",
+                    "https://api.weather.gov/zones/forecast/NCZ025",
+                    "https://api.weather.gov/zones/forecast/NCZ026",
+                    "https://api.weather.gov/zones/forecast/NCZ027",
+                    "https://api.weather.gov/zones/forecast/NCZ028",
+                    "https://api.weather.gov/zones/forecast/NCZ039",
+                    "https://api.weather.gov/zones/forecast/NCZ040",
+                    "https://api.weather.gov/zones/forecast/NCZ041",
+                    "https://api.weather.gov/zones/forecast/NCZ042",
+                    "https://api.weather.gov/zones/forecast/NCZ043",
+                    "https://api.weather.gov/zones/forecast/NCZ075",
+                    "https://api.weather.gov/zones/forecast/NCZ076",
+                    "https://api.weather.gov/zones/forecast/NCZ077",
+                    "https://api.weather.gov/zones/forecast/NCZ078",
+                    "https://api.weather.gov/zones/forecast/NCZ086",
+                    "https://api.weather.gov/zones/forecast/NCZ088",
+                    "https://api.weather.gov/zones/forecast/NCZ089"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.daaeaf35e3b71810127441de82db358c9d8e3229.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.daaeaf35e3b71810127441de82db358c9d8e3229.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-25T17:29:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-26T01:22:00-05:00",
+                "effective": "2026-11-26T01:22:00-05:00",
+                "onset": "2026-11-26T01:22:00-05:00",
+                "expires": "2026-11-26T10:00:00-05:00",
+                "ends": "2026-11-26T10:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Raleigh NC",
+                "headline": "Flood Watch issued November 26 at 1:22AM EST until November 26 at 10:00AM EST by NWS Raleigh NC",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A large portion of central North Carolina, including the\nfollowing counties, Alamance, Chatham, Cumberland, Durham,\nEdgecombe, Forsyth, Franklin, Granville, Guilford, Halifax,\nHarnett, Hoke, Johnston, Lee, Moore, Nash, Orange, Person,\nRandolph, Sampson, Vance, Wake, Warren, Wayne and Wilson.\n\n* WHEN...Until 10 AM EST this morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- A vigorous storm system with anomalous moisture and strong lift\nwill cause rain to expand and become moderate to heavy tonight\ninto Thursday morning. A broad area of 2 to 5 inches is expected,\nwith localized higher amounts between 5 and 8 inches possible in\nthe Coastal Plain and adjacent eastern Piedmont and Sandhills.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFARAH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KRAH 260622"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 10 AM EST THIS MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KRAH.FA.A.0003.000000T0000Z-261126T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-26T10:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.cb7f1357dc3aa765d860ec290cfee3bd2aea59f1.002.1,2026-11-25T11:19:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.cb7f1357dc3aa765d860ec290cfee3bd2aea59f1.001.1,2026-11-25T11:19:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.0833a33bb4621957301ccd9436808bc29bfbd28c.001.1,2026-11-25T01:47:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6f7b724dd7e5de8ea6c92ebeede9cf70e62502bf.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6f7b724dd7e5de8ea6c92ebeede9cf70e62502bf.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6f7b724dd7e5de8ea6c92ebeede9cf70e62502bf.001.1",
+                "areaDesc": "Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+                "geocode": {
+                    "SAME": [
+                        "037187",
+                        "037177",
+                        "037055",
+                        "037013",
+                        "037095",
+                        "037103",
+                        "037137",
+                        "037049",
+                        "037031",
+                        "037133"
+                    ],
+                    "UGC": [
+                        "NCZ045",
+                        "NCZ046",
+                        "NCZ047",
+                        "NCZ080",
+                        "NCZ081",
+                        "NCZ092",
+                        "NCZ094",
+                        "NCZ193",
+                        "NCZ194",
+                        "NCZ195",
+                        "NCZ196",
+                        "NCZ198",
+                        "NCZ199",
+                        "NCZ203",
+                        "NCZ204",
+                        "NCZ205"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NCZ045",
+                    "https://api.weather.gov/zones/forecast/NCZ046",
+                    "https://api.weather.gov/zones/forecast/NCZ047",
+                    "https://api.weather.gov/zones/forecast/NCZ080",
+                    "https://api.weather.gov/zones/forecast/NCZ081",
+                    "https://api.weather.gov/zones/forecast/NCZ092",
+                    "https://api.weather.gov/zones/forecast/NCZ094",
+                    "https://api.weather.gov/zones/forecast/NCZ193",
+                    "https://api.weather.gov/zones/forecast/NCZ194",
+                    "https://api.weather.gov/zones/forecast/NCZ195",
+                    "https://api.weather.gov/zones/forecast/NCZ196",
+                    "https://api.weather.gov/zones/forecast/NCZ198",
+                    "https://api.weather.gov/zones/forecast/NCZ199",
+                    "https://api.weather.gov/zones/forecast/NCZ203",
+                    "https://api.weather.gov/zones/forecast/NCZ204",
+                    "https://api.weather.gov/zones/forecast/NCZ205"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7811c89cbafa1662bfbe96fe58365e312d8ec052.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.7811c89cbafa1662bfbe96fe58365e312d8ec052.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-25T13:35:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-25T23:48:00-05:00",
+                "effective": "2026-11-25T23:48:00-05:00",
+                "onset": "2026-11-25T23:48:00-05:00",
+                "expires": "2026-11-26T13:00:00-05:00",
+                "ends": "2026-11-26T13:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Newport/Morehead City NC",
+                "headline": "Flood Watch issued November 25 at 11:48PM EST until November 26 at 1:00PM EST by NWS Newport/Morehead City NC",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of eastern North Carolina, including the\nfollowing areas, Beaufort, Coastal Onslow, East Carteret, Hatteras\nIsland, Inland Onslow, Jones, Mainland Dare, Mainland Hyde,\nNorthern Craven, Northern Outer Banks, Ocracoke Island, Pamlico,\nSouthern Craven, Tyrrell, Washington and West Carteret.\n\n* WHEN...Through early Thursday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- Rainfall totals of 4 to 6 inches are forecast, with locally\nhigher amounts possible especially near the Crystal Coast and\nsouthern Outer Banks.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMHX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMHX 260448"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT THROUGH 1PM THURSDAY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KMHX.FA.A.0005.000000T0000Z-261126T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-26T13:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.77360389106a9d517d0e74e54f8d04773f1af0fa.001.1,2026-11-25T07:53:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.b179dcfb9f126e8a421e42c46be9861dab8ba070.002.1,2026-11-24T23:32:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.07d919a4b40cb6ee0677104cbe662411c1a30252.001.1,2026-11-24T14:06:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6f7b724dd7e5de8ea6c92ebeede9cf70e62502bf.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6f7b724dd7e5de8ea6c92ebeede9cf70e62502bf.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6f7b724dd7e5de8ea6c92ebeede9cf70e62502bf.002.1",
+                "areaDesc": "Martin; Pitt; Greene; Duplin; Lenoir",
+                "geocode": {
+                    "SAME": [
+                        "037117",
+                        "037147",
+                        "037079",
+                        "037061",
+                        "037107"
+                    ],
+                    "UGC": [
+                        "NCZ029",
+                        "NCZ044",
+                        "NCZ079",
+                        "NCZ090",
+                        "NCZ091"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NCZ029",
+                    "https://api.weather.gov/zones/forecast/NCZ044",
+                    "https://api.weather.gov/zones/forecast/NCZ079",
+                    "https://api.weather.gov/zones/forecast/NCZ090",
+                    "https://api.weather.gov/zones/forecast/NCZ091"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7811c89cbafa1662bfbe96fe58365e312d8ec052.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.7811c89cbafa1662bfbe96fe58365e312d8ec052.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-11-25T13:35:00-05:00"
+                    }
+                ],
+                "sent": "2026-11-25T23:48:00-05:00",
+                "effective": "2026-11-25T23:48:00-05:00",
+                "onset": "2026-11-25T23:48:00-05:00",
+                "expires": "2026-11-26T10:00:00-05:00",
+                "ends": "2026-11-26T10:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Newport/Morehead City NC",
+                "headline": "Flood Watch issued November 25 at 11:48PM EST until November 26 at 10:00AM EST by NWS Newport/Morehead City NC",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of eastern North Carolina, including the\nfollowing counties, Duplin, Greene, Lenoir, Martin and Pitt.\n\n* WHEN...Until 10 AM EST Thursday.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- Rainfall totals of 3 to 5 inches are possible, with locally\nhigher amounts possible.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMHX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KMHX 260448"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 10 AM EST THURSDAY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KMHX.FA.A.0005.000000T0000Z-261126T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-11-26T10:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.77360389106a9d517d0e74e54f8d04773f1af0fa.002.1,2026-11-25T07:53:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.b179dcfb9f126e8a421e42c46be9861dab8ba070.001.1,2026-11-24T23:32:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-11-26T14:54:53+00:00"
+}
